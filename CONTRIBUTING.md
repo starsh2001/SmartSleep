@@ -15,8 +15,19 @@ Use four-space indentation and file-scoped namespaces. Follow standard .NET casi
 ## Testing Guidelines
 No automated test project ships with this snapshot. When adding tests, prefer `dotnet new xunit -o src/SmartSleep.App.Tests` and mirror the production namespace tree. Name test methods using `MethodUnderTest_State_ExpectedResult`. Until coverage exists, exercise key workflows manually: launch via `dotnet run`, toggle idle conditions, and confirm tray notifications and config persistence.
 
-## Commit & Pull Request Guidelines
-This distribution lacks Git metadata, so adopt Conventional Commits for clarity (for example, `feat: add network idle smoothing`). Keep commits focused and rebased on the latest main branch. Pull requests must state purpose, list manual or automated test evidence, and link related issues. Include before-and-after screenshots when you update UI or tray icons. Request review from a maintainer before merging.
-
+## Commit & Pull Request Guidelines
+Follow Conventional Commits so the history stays easy to scan. Use the format ``type(scope?): short summary`` with the summary kept under 72 characters. Allowed ``type`` tokens: ``feat``, ``fix``, ``docs``, ``style``, ``refactor``, ``perf``, ``test``, ``build``, ``ci``, ``chore``, ``revert``, ``release``. Example: ``feat(settings): add idle reset logic``.
+
+Keep each commit focused, prefer rebasing onto the latest ``master`` before opening a PR, and squash only when a reviewer asks for it. Pull requests should describe the change, list manual or automated test evidence, and link related issues. Include before/after screenshots for UI or tray icon tweaks, and request review from a maintainer before merging.
+
+### Commit hook
+Activate the local checker once per clone so commits are validated automatically:
+
+```powershell
+git config core.hooksPath .githooks
+```
+
+The ``commit-msg`` hook runs on PowerShell (or PowerShell 7) and blocks commits that do not match the convention. If PowerShell is unavailable, the hook skips the check, so please enforce the pattern manually in that case.
+
 ## Security & Configuration Tips
 The app writes runtime configuration to `config.json` beside the executable. Do not check personal configs into source control; instead, supply sanitized samples under `resources/` if needed. Review interop changes for privilege escalation risks and confirm all Windows API calls handle failure paths gracefully.

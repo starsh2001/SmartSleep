@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT="$HOOK_DIR/commit-msg.ps1"
+if command -v pwsh >/dev/null 2>&1; then
+  pwsh -NoProfile -ExecutionPolicy Bypass -File "$SCRIPT" "$@"
+elif command -v powershell >/dev/null 2>&1; then
+  powershell -NoProfile -ExecutionPolicy Bypass -File "$SCRIPT" "$@"
+else
+  echo "Neither pwsh nor powershell found; skipping Conventional Commit check." >&2
+  exit 0
+fi
+EXIT_CODE=$?
+exit $EXIT_CODE
