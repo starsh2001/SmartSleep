@@ -1,0 +1,32 @@
+# Build outputs
+bin/
+obj/
+**/bin/
+**/obj/
+
+# User-specific files
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+
+# IDE directories
+.vs/
+.idea/
+*.swp
+
+# Logs
+*.log
+
+# Dotnet artifacts
+project.lock.json
+artifacts/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Backup files
+*.bak
+
