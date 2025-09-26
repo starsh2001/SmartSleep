@@ -1,5 +1,9 @@
 ﻿using System;
 using SmartSleep.App.Models;
+using SmartSleep.App.Utilities;
+using System.Windows.Media;
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
 
 namespace SmartSleep.App.ViewModels;
 
@@ -29,6 +33,7 @@ public class SettingsViewModel : ViewModelBase
     private string _liveNetworkStatus = string.Empty;
     private string _liveCombinationStatus = string.Empty;
     private string _liveStatusMessage = string.Empty;
+    private Brush _liveStatusBrush = Brushes.SlateGray;
     private MonitoringSnapshot? _lastSnapshot;
 
     public bool UseInputActivity
@@ -234,6 +239,12 @@ public class SettingsViewModel : ViewModelBase
         get => _liveStatusMessage;
         private set => SetProperty(ref _liveStatusMessage, value);
     }
+    public Brush LiveStatusBrush
+    {
+        get => _liveStatusBrush;
+        private set => SetProperty(ref _liveStatusBrush, value);
+    }
+
 
     public static SettingsViewModel FromConfig(AppConfig config)
     {
@@ -380,6 +391,7 @@ public class SettingsViewModel : ViewModelBase
             LiveNetworkStatus = string.Empty;
             LiveCombinationStatus = string.Empty;
             LiveStatusMessage = string.Empty;
+            LiveStatusBrush = Brushes.SlateGray;
             return;
         }
 
@@ -428,6 +440,8 @@ public class SettingsViewModel : ViewModelBase
             statusText = string.Empty;
         }
 
-        LiveStatusMessage = statusText;
+        var (displayText, brush) = StatusDisplayHelper.FormatStatus(statusText);
+        LiveStatusMessage = displayText;
+        LiveStatusBrush = brush;
     }
 }

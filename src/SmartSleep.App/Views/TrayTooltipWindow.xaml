@@ -1,0 +1,25 @@
+<Window x:Class="SmartSleep.App.Views.TrayTooltipWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        SizeToContent="WidthAndHeight"
+        Topmost="True"
+        ResizeMode="NoResize">
+    <Border Background="#DD202020"
+            CornerRadius="6"
+            Padding="10"
+            BorderBrush="#55FFFFFF"
+            BorderThickness="1">
+        <TextBlock x:Name="ContentBlock"
+                   Foreground="White"
+                   FontFamily="Consolas"
+                   FontSize="12"
+                   Text="-"
+                   TextWrapping="Wrap"
+                   MaxWidth="260"/>
+    </Border>
+</Window>
