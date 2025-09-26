@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Media;
@@ -18,12 +20,12 @@ public class TrayIconService : IDisposable
     private readonly MonitoringService _monitoringService;
     private readonly Func<SettingsWindow> _settingsWindowFactory;
     private readonly Dispatcher _dispatcher;
-    private const string HiddenTooltipText = "​";
     private Forms.NotifyIcon? _notifyIcon;
     private SettingsWindow? _settingsWindow;
     private System.Drawing.Icon? _iconResource;
     private TrayTooltipWindow? _tooltipWindow;
     private DispatcherTimer? _tooltipHideTimer;
+    private bool _systemTooltipSuppressed;
     private MonitoringSnapshot? _lastSnapshot;
 
     public TrayIconService(MonitoringService monitoringService,
@@ -41,8 +43,7 @@ public class TrayIconService : IDisposable
         _notifyIcon = new Forms.NotifyIcon
         {
             Icon = _iconResource ?? System.Drawing.SystemIcons.Application,
-            Visible = true,
-            Text = HiddenTooltipText
+            Visible = true
         };
 
         var contextMenu = new Forms.ContextMenuStrip();
@@ -56,6 +57,8 @@ public class TrayIconService : IDisposable
         _monitoringService.SleepTriggered += MonitoringServiceOnSleepTriggered;
         _notifyIcon.MouseMove += NotifyIconOnMouseMove;
         _notifyIcon.MouseDown += NotifyIconOnMouseDown;
+
+        EnsureSystemTooltipSuppressed(force: true);
     }
 
     private System.Drawing.Icon? LoadIcon()
@@ -91,11 +94,9 @@ public class TrayIconService : IDisposable
 
         _dispatcher.BeginInvoke(() =>
         {
-            if (_notifyIcon != null && _notifyIcon.Text != HiddenTooltipText)
-            {
-                _notifyIcon.Text = HiddenTooltipText;
-            }
+            // No need to check or set tooltip text since we're completely suppressing tooltips
 
+            EnsureSystemTooltipSuppressed();
             UpdateTooltipWindow();
         });
     }
@@ -318,6 +319,38 @@ public class TrayIconService : IDisposable
         }
     }
 
+    private void EnsureSystemTooltipSuppressed(bool force = false)
+    {
+        if (_notifyIcon == null)
+        {
+            return;
+        }
+
+        if (!force && _systemTooltipSuppressed)
+        {
+            return;
+        }
+
+        if (!NotifyIconNative.TryBuildData(_notifyIcon, out var data))
+        {
+            return;
+        }
+
+        // Explicitly exclude NIF_TIP flag to completely remove tooltip functionality
+        // Only set MESSAGE and ICON flags to maintain tray icon without tooltip
+        data.uFlags = NotifyIconNative.NIF.MESSAGE | NotifyIconNative.NIF.ICON;
+        data.uCallbackMessage = NotifyIconNative.TrayMouseMessage;
+        data.hIcon = _notifyIcon.Icon?.Handle ?? IntPtr.Zero;
+        data.szTip = string.Empty;
+        data.szInfo = string.Empty;
+        data.szInfoTitle = string.Empty;
+
+        if (NotifyIconNative.ShellNotifyIcon(NotifyIconNative.NIM.MODIFY, ref data))
+        {
+            _systemTooltipSuppressed = true;
+        }
+    }
+
     public void Dispose()
     {
         _monitoringService.SnapshotAvailable -= MonitoringServiceOnSnapshotAvailable;
@@ -340,4 +373,116 @@ public class TrayIconService : IDisposable
         _iconResource?.Dispose();
         _iconResource = null;
     }
+
+    private static class NotifyIconNative
+    {
+        private static readonly FieldInfo? IdField = typeof(Forms.NotifyIcon).GetField("id", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly FieldInfo? WindowField = typeof(Forms.NotifyIcon).GetField("window", BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo? CreateHandleMethod = typeof(Forms.NotifyIcon).GetMethod("CreateHandle", BindingFlags.Instance | BindingFlags.NonPublic);
+        internal static readonly uint TrayMouseMessage = Convert.ToUInt32(typeof(Forms.NotifyIcon)
+            .GetField("WM_TRAYMOUSEMESSAGE", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null) ?? 0x800);
+
+        internal static bool TryBuildData(Forms.NotifyIcon icon, out NOTIFYICONDATA data)
+        {
+            data = NOTIFYICONDATA.Create();
+
+            try
+            {
+                var window = WindowField?.GetValue(icon) as Forms.NativeWindow;
+                if (window == null)
+                {
+                    CreateHandleMethod?.Invoke(icon, null);
+                    window = WindowField?.GetValue(icon) as Forms.NativeWindow;
+                }
+
+                var handle = window?.Handle ?? IntPtr.Zero;
+                if (handle == IntPtr.Zero)
+                {
+                    data = default;
+                    return false;
+                }
+
+                var idValue = IdField?.GetValue(icon);
+                if (idValue == null)
+                {
+                    data = default;
+                    return false;
+                }
+
+                data.hWnd = handle;
+                data.uID = Convert.ToUInt32(idValue);
+                return true;
+            }
+            catch
+            {
+                data = default;
+                return false;
+            }
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, EntryPoint = "Shell_NotifyIconW")]
+        internal static extern bool ShellNotifyIcon(NIM message, ref NOTIFYICONDATA data);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct NOTIFYICONDATA
+        {
+            public int cbSize;
+            public IntPtr hWnd;
+            public uint uID;
+            public NIF uFlags;
+            public uint uCallbackMessage;
+            public IntPtr hIcon;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
+            public string szTip;
+            public uint dwState;
+            public uint dwStateMask;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)]
+            public string szInfo;
+            public uint uTimeoutOrVersion;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)]
+            public string szInfoTitle;
+            public uint dwInfoFlags;
+            public Guid guidItem;
+            public IntPtr hBalloonIcon;
+
+            internal static NOTIFYICONDATA Create()
+            {
+                return new NOTIFYICONDATA
+                {
+                    cbSize = Marshal.SizeOf<NOTIFYICONDATA>(),
+                    szTip = string.Empty,
+                    szInfo = string.Empty,
+                    szInfoTitle = string.Empty,
+                    guidItem = Guid.Empty,
+                    hBalloonIcon = IntPtr.Zero
+                };
+            }
+        }
+
+        [Flags]
+        internal enum NIF : uint
+        {
+            MESSAGE = 0x00000001,
+            ICON = 0x00000002,
+            TIP = 0x00000004,
+            STATE = 0x00000008,
+            INFO = 0x00000010,
+            GUID = 0x00000020
+        }
+
+        internal enum NIM : uint
+        {
+            ADD = 0x00000000,
+            MODIFY = 0x00000001,
+            DELETE = 0x00000002,
+            SETFOCUS = 0x00000003,
+            SETVERSION = 0x00000004
+        }
+    }
+
 }
+
+
+
+
+
