@@ -7,7 +7,7 @@ public class AppConfig
     public IdleSettings Idle { get; set; } = IdleSettings.CreateDefault();
     public ScheduleSettings Schedule { get; set; } = ScheduleSettings.CreateDefault();
     public bool StartWithWindows { get; set; }
-    public int PollingIntervalSeconds { get; set; } = 15;
+    public int PollingIntervalSeconds { get; set; } = 1;
     public int SleepCooldownSeconds { get; set; } = 45;
 
     public static AppConfig CreateDefault() => new()
@@ -15,7 +15,7 @@ public class AppConfig
         Idle = IdleSettings.CreateDefault(),
         Schedule = ScheduleSettings.CreateDefault(),
         StartWithWindows = false,
-        PollingIntervalSeconds = 15,
+        PollingIntervalSeconds = 1,
         SleepCooldownSeconds = 45
     };
 

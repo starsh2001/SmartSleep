@@ -5,15 +5,15 @@ namespace SmartSleep.App.Models;
 public class IdleSettings
 {
     public bool UseInputActivity { get; set; } = true;
-    public int InputIdleThresholdSeconds { get; set; } = 180;
+    public int InputIdleThresholdSeconds { get; set; } = 1200;
     public bool UseCpuActivity { get; set; } = true;
-    public double CpuUsagePercentageThreshold { get; set; } = 5.0;
-    public int CpuIdleDurationSeconds { get; set; } = 120;
-    public int CpuSmoothingWindow { get; set; } = 3;
+    public double CpuUsagePercentageThreshold { get; set; } = 10.0;
+    public int CpuIdleDurationSeconds { get; set; } = 600;
+    public int CpuSmoothingWindow { get; set; } = 5;
     public bool UseNetworkActivity { get; set; } = true;
-    public double NetworkKilobytesPerSecondThreshold { get; set; } = 32.0;
-    public int NetworkIdleDurationSeconds { get; set; } = 120;
-    public int NetworkSmoothingWindow { get; set; } = 3;
+    public double NetworkKilobytesPerSecondThreshold { get; set; } = 128.0;
+    public int NetworkIdleDurationSeconds { get; set; } = 600;
+    public int NetworkSmoothingWindow { get; set; } = 5;
     public IdleCombinationMode CombinationMode { get; set; } = IdleCombinationMode.All;
 
     public TimeSpan InputIdleThreshold => TimeSpan.FromSeconds(Math.Max(0, InputIdleThresholdSeconds));

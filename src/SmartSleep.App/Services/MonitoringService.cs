@@ -375,16 +375,6 @@ public class MonitoringService : IDisposable
             return $"감시 시작까지 {Math.Ceiling(scheduleRemaining)}초";
         }
 
-        if (config.Idle.UseCpuActivity && !cpuUsageOk)
-        {
-            return $"CPU 사용량 {cpuUsage:F1}%/{config.Idle.CpuUsagePercentageThreshold:F1}%";
-        }
-
-        if (config.Idle.UseNetworkActivity && !networkUsageOk)
-        {
-            return $"네트워크 {networkUsage:F0}/{config.Idle.NetworkKilobytesPerSecondThreshold:F0}KB/s";
-        }
-
         double inputRemaining = config.Idle.UseInputActivity
             ? Math.Max(0, config.Idle.InputIdleThreshold.TotalSeconds - inputIdle.TotalSeconds)
             : 0;
@@ -406,6 +396,22 @@ public class MonitoringService : IDisposable
             }
 
             return $"예상 절전까지 {Math.Ceiling(remaining)}초";
+        }
+
+        bool cpuBlocksAll = config.Idle.UseCpuActivity && !cpuUsageOk &&
+                             (config.Idle.CombinationMode == IdleCombinationMode.All ||
+                              (!config.Idle.UseInputActivity && !config.Idle.UseNetworkActivity));
+        if (cpuBlocksAll)
+        {
+            return $"CPU 사용량 {cpuUsage:F1}%/{config.Idle.CpuUsagePercentageThreshold:F1}%";
+        }
+
+        bool networkBlocksAll = config.Idle.UseNetworkActivity && !networkUsageOk &&
+                                (config.Idle.CombinationMode == IdleCombinationMode.All ||
+                                 (!config.Idle.UseInputActivity && !config.Idle.UseCpuActivity));
+        if (networkBlocksAll)
+        {
+            return $"네트워크 {networkUsage:F0}/{config.Idle.NetworkKilobytesPerSecondThreshold:F0}KB/s";
         }
 
         double conditionRemaining;

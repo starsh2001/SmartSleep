@@ -5,8 +5,8 @@ namespace SmartSleep.App.Models;
 public class ScheduleSettings
 {
     public bool Enabled { get; set; }
-    public TimeSpan StartTime { get; set; } = TimeSpan.FromHours(22);
-    public TimeSpan EndTime { get; set; } = TimeSpan.FromHours(6);
+    public TimeSpan StartTime { get; set; } = TimeSpan.Zero;
+    public TimeSpan EndTime { get; set; } = TimeSpan.Zero;
 
     public static ScheduleSettings CreateDefault() => new();
 

@@ -6,19 +6,19 @@ namespace SmartSleep.App.ViewModels;
 public class SettingsViewModel : ViewModelBase
 {
     private bool _useInputActivity;
-    private int _inputIdleSeconds;
+    private int _inputIdleSeconds = 1200;
     private bool _useCpuActivity;
-    private double _cpuUsageThreshold;
-    private int _cpuIdleDurationSeconds;
-    private int _cpuSmoothingWindow = 3;
+    private double _cpuUsageThreshold = 10.0;
+    private int _cpuIdleDurationSeconds = 600;
+    private int _cpuSmoothingWindow = 5;
     private bool _useNetworkActivity;
-    private double _networkThreshold;
-    private int _networkIdleDurationSeconds;
-    private int _networkSmoothingWindow = 3;
+    private double _networkThreshold = 128.0;
+    private int _networkIdleDurationSeconds = 600;
+    private int _networkSmoothingWindow = 5;
     private int _pollingIntervalSeconds;
     private bool _scheduleEnabled;
-    private string _scheduleStartText = "22:00";
-    private string _scheduleEndText = "06:00";
+    private string _scheduleStartText = "00:00";
+    private string _scheduleEndText = "00:00";
     private bool _startWithWindows;
     private IdleCombinationMode _combinationMode = IdleCombinationMode.All;
     private int _sleepCooldownSeconds = 45;
