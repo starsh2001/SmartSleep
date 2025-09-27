@@ -46,7 +46,7 @@ Settings are persisted to `config.json` alongside the executable. The `AppConfig
 The `MonitoringService` runs a continuous loop that:
 1. Samples CPU usage, network usage, and input idle time
 2. Applies moving averages to smooth sensor spikes
-3. Determines idle state based on user-configured thresholds and combination mode (AND/OR)
+3. Determines idle state based on user-configured thresholds (requires all enabled conditions to be met)
 4. Triggers sleep when idle duration exceeds configured timeout
 5. Respects schedule restrictions and sleep cooldown periods
 

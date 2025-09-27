@@ -211,8 +211,7 @@ public class TrayIconService : IDisposable
 
         if (snapshot.EnabledConditionCount > 0)
         {
-            var modeLabel = snapshot.CombinationMode == IdleCombinationMode.All ? "AND" : "OR";
-            lines.Add(($"{modeLabel} {snapshot.SatisfiedConditionCount}/{snapshot.EnabledConditionCount}", Brushes.White));
+            lines.Add(($"조건 {snapshot.SatisfiedConditionCount}/{snapshot.EnabledConditionCount}", Brushes.White));
         }
 
         if (!string.IsNullOrWhiteSpace(snapshot.StatusMessage))

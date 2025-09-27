@@ -24,7 +24,6 @@ public class SettingsViewModel : ViewModelBase
     private string _scheduleStartText = "00:00";
     private string _scheduleEndText = "00:00";
     private bool _startWithWindows;
-    private IdleCombinationMode _combinationMode = IdleCombinationMode.All;
     private int _sleepCooldownSeconds = 45;
     private string _statusMessage = string.Empty;
 
@@ -186,17 +185,6 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _startWithWindows, value);
     }
 
-    public IdleCombinationMode CombinationMode
-    {
-        get => _combinationMode;
-        set
-        {
-            if (SetProperty(ref _combinationMode, value))
-            {
-                RefreshLiveStatus();
-            }
-        }
-    }
 
     public int SleepCooldownSeconds
     {
@@ -262,7 +250,6 @@ public class SettingsViewModel : ViewModelBase
             NetworkThreshold = config.Idle.NetworkKilobytesPerSecondThreshold,
             NetworkIdleDurationSeconds = config.Idle.NetworkIdleDurationSeconds,
             NetworkSmoothingWindow = config.Idle.NetworkSmoothingWindow,
-            CombinationMode = config.Idle.CombinationMode,
             PollingIntervalSeconds = config.PollingIntervalSeconds,
             ScheduleEnabled = config.Schedule.Enabled,
             ScheduleStartText = config.Schedule.StartTime.ToString("hh\\:mm"),
@@ -357,7 +344,6 @@ public class SettingsViewModel : ViewModelBase
         config.Idle.NetworkKilobytesPerSecondThreshold = NetworkThreshold;
         config.Idle.NetworkIdleDurationSeconds = NetworkIdleDurationSeconds;
         config.Idle.NetworkSmoothingWindow = NetworkSmoothingWindow;
-        config.Idle.CombinationMode = CombinationMode;
         config.PollingIntervalSeconds = PollingIntervalSeconds;
         config.StartWithWindows = StartWithWindows;
         config.SleepCooldownSeconds = Math.Max(10, SleepCooldownSeconds);
@@ -426,8 +412,7 @@ public class SettingsViewModel : ViewModelBase
 
         if (snapshot.EnabledConditionCount > 0)
         {
-            var modeLabel = snapshot.CombinationMode == IdleCombinationMode.All ? "AND" : "OR";
-            LiveCombinationStatus = $"조건 {snapshot.SatisfiedConditionCount}/{snapshot.EnabledConditionCount} ({modeLabel})";
+            LiveCombinationStatus = $"조건 {snapshot.SatisfiedConditionCount}/{snapshot.EnabledConditionCount}";
         }
         else
         {

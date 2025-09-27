@@ -144,7 +144,6 @@ public class MonitoringService : IDisposable
             }
 
             var shouldPropagateReset =
-                snapshotConfig.Idle.CombinationMode == IdleCombinationMode.All &&
                 scheduleActive &&
                 (inputActivityDetected ||
                  (snapshotConfig.Idle.UseCpuActivity && !cpuUsageOk) ||
@@ -166,7 +165,7 @@ public class MonitoringService : IDisposable
 
             var enabledCount = CountEnabledConditions(snapshotConfig);
             var satisfiedCount = CountSatisfiedConditions(snapshotConfig, inputConditionMet, cpuConditionMet, networkConditionMet);
-            var combinationSatisfied = EvaluateCombination(snapshotConfig.Idle.CombinationMode, enabledCount, satisfiedCount);
+            var combinationSatisfied = EvaluateCombination(enabledCount, satisfiedCount);
 
             var inputIdleDisplay = (!scheduleActive || !snapshotConfig.Idle.UseInputActivity) ? TimeSpan.Zero : inputIdle;
             var cpuIdleDisplay = (scheduleActive && snapshotConfig.Idle.UseCpuActivity) ? cpuIdleDuration : TimeSpan.Zero;
@@ -222,7 +221,6 @@ public class MonitoringService : IDisposable
                 NetworkIdleDuration = networkIdleDisplay,
                 NetworkIdleRequirement = snapshotConfig.Idle.NetworkIdleDurationRequirement,
                 NetworkConditionMet = networkConditionMet,
-                CombinationMode = snapshotConfig.Idle.CombinationMode,
                 EnabledConditionCount = enabledCount,
                 SatisfiedConditionCount = satisfiedCount,
                 ScheduleActive = scheduleActive,
@@ -328,19 +326,14 @@ public class MonitoringService : IDisposable
         return count;
     }
 
-    private static bool EvaluateCombination(IdleCombinationMode mode, int enabledCount, int satisfiedCount)
+    private static bool EvaluateCombination(int enabledCount, int satisfiedCount)
     {
         if (enabledCount == 0)
         {
             return false;
         }
 
-        return mode switch
-        {
-            IdleCombinationMode.All => satisfiedCount == enabledCount,
-            IdleCombinationMode.Any => satisfiedCount > 0,
-            _ => false
-        };
+        return satisfiedCount == enabledCount;
     }
 
     private string DetermineStatusMessage(
@@ -399,51 +392,20 @@ public class MonitoringService : IDisposable
         }
 
         bool cpuBlocksAll = config.Idle.UseCpuActivity && !cpuUsageOk &&
-                             (config.Idle.CombinationMode == IdleCombinationMode.All ||
-                              (!config.Idle.UseInputActivity && !config.Idle.UseNetworkActivity));
+                             (!config.Idle.UseInputActivity && !config.Idle.UseNetworkActivity);
         if (cpuBlocksAll)
         {
             return $"CPU 사용량 {cpuUsage:F1}%/{config.Idle.CpuUsagePercentageThreshold:F1}%";
         }
 
         bool networkBlocksAll = config.Idle.UseNetworkActivity && !networkUsageOk &&
-                                (config.Idle.CombinationMode == IdleCombinationMode.All ||
-                                 (!config.Idle.UseInputActivity && !config.Idle.UseCpuActivity));
+                                (!config.Idle.UseInputActivity && !config.Idle.UseCpuActivity);
         if (networkBlocksAll)
         {
             return $"네트워크 {networkUsage:F0}/{config.Idle.NetworkKilobytesPerSecondThreshold:F0}KB/s";
         }
 
-        double conditionRemaining;
-        if (config.Idle.CombinationMode == IdleCombinationMode.All)
-        {
-            conditionRemaining = Math.Max(inputRemaining, Math.Max(cpuRemaining, networkRemaining));
-        }
-        else
-        {
-            double min = double.PositiveInfinity;
-            if (config.Idle.UseInputActivity)
-            {
-                min = Math.Min(min, inputRemaining);
-            }
-
-            if (config.Idle.UseCpuActivity)
-            {
-                min = Math.Min(min, cpuRemaining);
-            }
-
-            if (config.Idle.UseNetworkActivity)
-            {
-                min = Math.Min(min, networkRemaining);
-            }
-
-            if (double.IsPositiveInfinity(min))
-            {
-                min = 0;
-            }
-
-            conditionRemaining = min;
-        }
+        var conditionRemaining = Math.Max(inputRemaining, Math.Max(cpuRemaining, networkRemaining));
 
         var totalRemaining = Math.Max(scheduleRemaining, conditionRemaining);
         totalRemaining = Math.Max(totalRemaining, cooldownRemainingSeconds);

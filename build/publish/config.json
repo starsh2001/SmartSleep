@@ -1,0 +1,26 @@
+{
+  "idle": {
+    "useInputActivity": true,
+    "inputIdleThresholdSeconds": 1200,
+    "useCpuActivity": true,
+    "cpuUsagePercentageThreshold": 15,
+    "cpuIdleDurationSeconds": 600,
+    "cpuSmoothingWindow": 10,
+    "useNetworkActivity": true,
+    "networkKilobytesPerSecondThreshold": 256,
+    "networkIdleDurationSeconds": 600,
+    "networkSmoothingWindow": 10,
+    "combinationMode": 0,
+    "inputIdleThreshold": "00:20:00",
+    "cpuIdleDurationRequirement": "00:10:00",
+    "networkIdleDurationRequirement": "00:10:00"
+  },
+  "schedule": {
+    "enabled": true,
+    "startTime": "19:00:00",
+    "endTime": "06:00:00"
+  },
+  "startWithWindows": true,
+  "pollingIntervalSeconds": 1,
+  "sleepCooldownSeconds": 45
+}

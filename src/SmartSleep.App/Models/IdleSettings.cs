@@ -14,7 +14,6 @@ public class IdleSettings
     public double NetworkKilobytesPerSecondThreshold { get; set; } = 128.0;
     public int NetworkIdleDurationSeconds { get; set; } = 600;
     public int NetworkSmoothingWindow { get; set; } = 5;
-    public IdleCombinationMode CombinationMode { get; set; } = IdleCombinationMode.All;
 
     public TimeSpan InputIdleThreshold => TimeSpan.FromSeconds(Math.Max(0, InputIdleThresholdSeconds));
     public TimeSpan CpuIdleDurationRequirement => TimeSpan.FromSeconds(Math.Max(0, CpuIdleDurationSeconds));
@@ -34,6 +33,5 @@ public class IdleSettings
         NetworkKilobytesPerSecondThreshold = NetworkKilobytesPerSecondThreshold,
         NetworkIdleDurationSeconds = NetworkIdleDurationSeconds,
         NetworkSmoothingWindow = NetworkSmoothingWindow,
-        CombinationMode = CombinationMode
     };
 }

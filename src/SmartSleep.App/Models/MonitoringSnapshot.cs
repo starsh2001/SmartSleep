@@ -25,7 +25,6 @@ public class MonitoringSnapshot
     public TimeSpan NetworkIdleRequirement { get; init; }
     public bool NetworkConditionMet { get; init; }
 
-    public IdleCombinationMode CombinationMode { get; init; }
     public int EnabledConditionCount { get; init; }
     public int SatisfiedConditionCount { get; init; }
     public bool ScheduleActive { get; init; }
