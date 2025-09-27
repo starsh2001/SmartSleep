@@ -135,16 +135,14 @@ public static class LocalizationManager
         dictionary["Settings_Title"] = "SmartSleep Settings";
         dictionary["Settings_Section_CurrentStatus"] = "Current Status";
         dictionary["Settings_Section_Monitoring"] = "Monitoring Criteria";
+        dictionary["Settings_IdleTime"] = "Idle time required:";
         dictionary["Settings_UseInputActivity"] = "Monitor mouse/keyboard activity";
         dictionary["Settings_IncludeGamepadInput"] = "Include gamepad input";
-        dictionary["Settings_InputIdleThreshold"] = "Input idle threshold (s):";
         dictionary["Settings_UseCpuActivity"] = "Monitor CPU activity";
         dictionary["Settings_CpuThreshold"] = "CPU threshold (%):";
-        dictionary["Settings_CpuIdleDuration"] = "CPU idle duration required (s):";
         dictionary["Settings_CpuSmoothingWindow"] = "CPU moving average samples:";
         dictionary["Settings_UseNetworkActivity"] = "Monitor network activity";
         dictionary["Settings_NetworkThreshold"] = "Network threshold (KB/s):";
-        dictionary["Settings_NetworkIdleDuration"] = "Network idle duration required (s):";
         dictionary["Settings_NetworkSmoothingWindow"] = "Network moving average samples:";
         dictionary["Settings_PollingInterval"] = "Sampling interval (s):";
         dictionary["Settings_Section_Schedule"] = "Monitoring Schedule";
@@ -190,8 +188,23 @@ public static class LocalizationManager
         dictionary["Status_DisplayPrefix"] = "[Status] {0}";
         dictionary["StatusKeyword_Sleep"] = "sleep";
         dictionary["StatusKeyword_Request"] = "request";
+        dictionary["StatusKeyword_Shutdown"] = "shutdown";
         dictionary["StatusKeyword_CPU"] = "CPU";
         dictionary["StatusKeyword_Network"] = "network";
+
+        // Live status new keys
+        dictionary["LiveStatus_InputWaiting"] = "Input: waiting";
+        dictionary["LiveStatus_InputActive"] = "Input: activity detected";
+        dictionary["LiveStatus_InputDisabled"] = "Input: disabled";
+        dictionary["LiveStatus_Cpu"] = "CPU {0:F1}% / {1:F1}%";
+        dictionary["LiveStatus_CpuDisabled"] = "CPU {0:F1}% (disabled)";
+        dictionary["LiveStatus_Network"] = "Network {0:F0}KB/s / {1:F0}KB/s";
+        dictionary["LiveStatus_NetworkDisabled"] = "Network {0:F0}KB/s (disabled)";
+        dictionary["Status_ActivityDetected"] = "Activity detected";
+        dictionary["Detail_Input"] = "Input";
+        dictionary["Detail_InputActive"] = "Input activity";
+        dictionary["Detail_Cpu"] = "CPU";
+        dictionary["Detail_Network"] = "Network";
 
         dictionary["Status_NoConditions"] = "No monitoring conditions enabled";
         dictionary["Status_NotMonitoring"] = "Not currently monitoring";
@@ -256,16 +269,14 @@ public static class LocalizationManager
         dictionary["Settings_Title"] = "SmartSleep 설정";
         dictionary["Settings_Section_CurrentStatus"] = "현재 상태";
         dictionary["Settings_Section_Monitoring"] = "모니터링 기준";
+        dictionary["Settings_IdleTime"] = "유휴 시간 필요:";
         dictionary["Settings_UseInputActivity"] = "마우스/키보드 활동 사용";
         dictionary["Settings_IncludeGamepadInput"] = "게임패드 입력 포함";
-        dictionary["Settings_InputIdleThreshold"] = "입력 유휴 판정 (초):";
         dictionary["Settings_UseCpuActivity"] = "CPU 활동 사용";
         dictionary["Settings_CpuThreshold"] = "CPU 임계값 (%):";
-        dictionary["Settings_CpuIdleDuration"] = "CPU 유휴 필요 시간 (초):";
         dictionary["Settings_CpuSmoothingWindow"] = "CPU 이동 평균 샘플 수:";
         dictionary["Settings_UseNetworkActivity"] = "네트워크 활동 사용";
         dictionary["Settings_NetworkThreshold"] = "네트워크 임계값 (KB/s):";
-        dictionary["Settings_NetworkIdleDuration"] = "네트워크 유휴 필요 시간 (초):";
         dictionary["Settings_NetworkSmoothingWindow"] = "네트워크 이동 평균 샘플 수:";
         dictionary["Settings_PollingInterval"] = "모니터링 주기 (초):";
         dictionary["Settings_Section_Schedule"] = "감시 시간 설정";
@@ -311,8 +322,23 @@ public static class LocalizationManager
         dictionary["Status_DisplayPrefix"] = "[상태] {0}";
         dictionary["StatusKeyword_Sleep"] = "절전";
         dictionary["StatusKeyword_Request"] = "요청";
+        dictionary["StatusKeyword_Shutdown"] = "종료";
         dictionary["StatusKeyword_CPU"] = "CPU";
         dictionary["StatusKeyword_Network"] = "네트워크";
+
+        // Live status new keys
+        dictionary["LiveStatus_InputWaiting"] = "입력: 대기중";
+        dictionary["LiveStatus_InputActive"] = "입력: 활동 감지됨";
+        dictionary["LiveStatus_InputDisabled"] = "입력: 비활성화";
+        dictionary["LiveStatus_Cpu"] = "CPU {0:F1}% / {1:F1}%";
+        dictionary["LiveStatus_CpuDisabled"] = "CPU {0:F1}% (비활성화)";
+        dictionary["LiveStatus_Network"] = "네트워크 {0:F0}KB/s / {1:F0}KB/s";
+        dictionary["LiveStatus_NetworkDisabled"] = "네트워크 {0:F0}KB/s (비활성화)";
+        dictionary["Status_ActivityDetected"] = "활동 감지됨";
+        dictionary["Detail_Input"] = "입력";
+        dictionary["Detail_InputActive"] = "입력 활동";
+        dictionary["Detail_Cpu"] = "CPU";
+        dictionary["Detail_Network"] = "네트워크";
 
         dictionary["Status_NoConditions"] = "활성화된 조건이 없습니다";
         dictionary["Status_NotMonitoring"] = "현재 감시 중이 아님";

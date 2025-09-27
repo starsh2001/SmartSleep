@@ -27,8 +27,10 @@ public static class StatusDisplayHelper
     {
         var sleepKeyword = LocalizationManager.GetString("StatusKeyword_Sleep");
         var requestKeyword = LocalizationManager.GetString("StatusKeyword_Request");
+        var shutdownKeyword = LocalizationManager.GetString("StatusKeyword_Shutdown");
         if (message.Contains(sleepKeyword, StringComparison.OrdinalIgnoreCase) ||
-            message.Contains(requestKeyword, StringComparison.OrdinalIgnoreCase))
+            message.Contains(requestKeyword, StringComparison.OrdinalIgnoreCase) ||
+            message.Contains(shutdownKeyword, StringComparison.OrdinalIgnoreCase))
         {
             return SuccessBrush;
         }

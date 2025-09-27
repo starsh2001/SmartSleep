@@ -11,8 +11,11 @@ public static class InputActivityReader
     private static bool _gamepadInitialized = false;
     private static TimeSpan _cachedGamepadIdleTime = TimeSpan.MaxValue;
     private static Task? _gamepadInitializationTask;
+    private static System.Threading.Timer? _inputMonitoringTimer;
+    private static TimeSpan _lastIdleTime = TimeSpan.Zero;
 
     public static event EventHandler<GamepadConnectionEventArgs>? GamepadConnectionChanged;
+    public static event EventHandler? InputActivityDetected;
 
     public static TimeSpan GetIdleTime()
     {
@@ -191,10 +194,60 @@ public static class InputActivityReader
         }
     }
 
+    public static void StartInputMonitoring()
+    {
+        lock (_lock)
+        {
+            if (_inputMonitoringTimer == null)
+            {
+                _lastIdleTime = GetKeyboardMouseIdleTime();
+                _inputMonitoringTimer = new System.Threading.Timer(MonitorInputActivity, null,
+                    TimeSpan.FromMilliseconds(50), TimeSpan.FromMilliseconds(50));
+            }
+        }
+    }
+
+    public static void StopInputMonitoring()
+    {
+        lock (_lock)
+        {
+            _inputMonitoringTimer?.Dispose();
+            _inputMonitoringTimer = null;
+        }
+    }
+
+    private static void MonitorInputActivity(object? state)
+    {
+        try
+        {
+            var currentIdleTime = GetKeyboardMouseIdleTime();
+
+            lock (_lock)
+            {
+                // If idle time decreased, input activity occurred
+                if (currentIdleTime < _lastIdleTime)
+                {
+                    // Fire event on main thread
+                    System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+                    {
+                        InputActivityDetected?.Invoke(null, EventArgs.Empty);
+                    });
+                }
+                _lastIdleTime = currentIdleTime;
+            }
+        }
+        catch
+        {
+            // Ignore errors in monitoring
+        }
+    }
+
     public static void Cleanup()
     {
         lock (_lock)
         {
+            StopInputMonitoring();
+
             if (_gamepadReader != null)
             {
                 _gamepadReader.GamepadConnectionChanged -= OnGamepadConnectionChanged;

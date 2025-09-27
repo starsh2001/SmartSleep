@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Media;
@@ -27,6 +29,9 @@ public class TrayIconService : IDisposable
     private DispatcherTimer? _tooltipHideTimer;
     private bool _systemTooltipSuppressed;
     private MonitoringSnapshot? _lastSnapshot;
+    private bool _inputActivityDetected = false;
+    private DispatcherTimer? _inputActivityTimer;
+    private string _lastTooltipContent = string.Empty;
 
     public TrayIconService(MonitoringService monitoringService,
                            Func<SettingsWindow> settingsWindowFactory,
@@ -57,6 +62,10 @@ public class TrayIconService : IDisposable
         _monitoringService.SleepTriggered += MonitoringServiceOnSleepTriggered;
         _notifyIcon.MouseMove += NotifyIconOnMouseMove;
         _notifyIcon.MouseDown += NotifyIconOnMouseDown;
+
+        // Subscribe to input activity events
+        Utilities.InputActivityReader.InputActivityDetected += OnInputActivityDetected;
+        Utilities.InputActivityReader.StartInputMonitoring();
 
         EnsureSystemTooltipSuppressed(force: true);
     }
@@ -97,7 +106,11 @@ public class TrayIconService : IDisposable
             // No need to check or set tooltip text since we're completely suppressing tooltips
 
             EnsureSystemTooltipSuppressed();
-            UpdateTooltipWindow();
+            // Update tooltip content if visible (without hiding/showing)
+            if (_tooltipWindow?.IsVisible == true)
+            {
+                UpdateTooltipWindow();
+            }
         });
     }
 
@@ -147,6 +160,35 @@ public class TrayIconService : IDisposable
         _dispatcher.BeginInvoke(HideTooltipWindow);
     }
 
+    private void OnInputActivityDetected(object? sender, EventArgs e)
+    {
+        _dispatcher.BeginInvoke(() =>
+        {
+            _inputActivityDetected = true;
+            _inputActivityTimer?.Stop();
+            _inputActivityTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(500)
+            };
+            _inputActivityTimer.Tick += (_, _) =>
+            {
+                _inputActivityTimer.Stop();
+                _inputActivityDetected = false;
+                // Only update tooltip if it's currently visible to prevent flickering
+                if (_tooltipWindow?.IsVisible == true)
+                {
+                    UpdateTooltipWindow();
+                }
+            };
+            _inputActivityTimer.Start();
+            // Update tooltip content if visible (without hiding/showing)
+            if (_tooltipWindow?.IsVisible == true)
+            {
+                UpdateTooltipWindow();
+            }
+        });
+    }
+
     private void ShowSettings()
     {
         _dispatcher.BeginInvoke(() =>
@@ -190,36 +232,57 @@ public class TrayIconService : IDisposable
         }));
     }
 
-    private static IReadOnlyList<(string Text, Brush Brush)> BuildTooltipLines(MonitoringSnapshot snapshot)
+    private IReadOnlyList<(string Text, Brush Brush)> BuildTooltipLines(MonitoringSnapshot snapshot)
     {
         var lines = new List<(string Text, Brush Brush)>
         {
             (LocalizationManager.GetString("Tooltip_Title"), Brushes.White)
         };
 
-        lines.Add(snapshot.InputMonitoringEnabled
-            ? (LocalizationManager.Format("Tooltip_InputActive", snapshot.InputIdle.TotalSeconds, snapshot.InputIdleRequirement.TotalSeconds), Brushes.White)
-            : (LocalizationManager.Format("Tooltip_InputInactive", snapshot.InputIdle.TotalSeconds), Brushes.DimGray));
+        if (snapshot.InputMonitoringEnabled)
+        {
+            var inputText = _inputActivityDetected
+                ? LocalizationManager.GetString("LiveStatus_InputActive") // "입력: 활동 감지됨"
+                : LocalizationManager.GetString("LiveStatus_InputWaiting"); // "입력: 대기중"
+            var inputBrush = _inputActivityDetected ? Brushes.Orange : Brushes.White;
+            lines.Add((inputText, inputBrush));
+        }
+        else
+        {
+            lines.Add((LocalizationManager.GetString("LiveStatus_InputDisabled"), Brushes.DimGray));
+        }
 
         lines.Add(snapshot.CpuMonitoringEnabled
-            ? (LocalizationManager.Format("Tooltip_CpuActive", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent, snapshot.CpuIdleDuration.TotalSeconds, snapshot.CpuIdleRequirement.TotalSeconds), Brushes.White)
-            : (LocalizationManager.Format("Tooltip_CpuInactive", snapshot.CpuUsagePercent), Brushes.DimGray));
+            ? (LocalizationManager.Format("LiveStatus_Cpu", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent), Brushes.White)
+            : (LocalizationManager.Format("LiveStatus_CpuDisabled", snapshot.CpuUsagePercent), Brushes.DimGray));
 
         lines.Add(snapshot.NetworkMonitoringEnabled
-            ? (LocalizationManager.Format("Tooltip_NetworkActive", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond, snapshot.NetworkIdleDuration.TotalSeconds, snapshot.NetworkIdleRequirement.TotalSeconds), Brushes.White)
-            : (LocalizationManager.Format("Tooltip_NetworkInactive", snapshot.NetworkKilobytesPerSecond), Brushes.DimGray));
+            ? (LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond), Brushes.White)
+            : (LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobytesPerSecond), Brushes.DimGray));
 
-        if (snapshot.EnabledConditionCount > 0)
-        {
-            lines.Add((LocalizationManager.Format("Tooltip_Conditions", snapshot.SatisfiedConditionCount, snapshot.EnabledConditionCount), Brushes.White));
-        }
+        // Conditions count display removed - no longer needed with real-time activity detection
 
         if (!string.IsNullOrWhiteSpace(snapshot.StatusMessage))
         {
-            var (statText, statBrush) = StatusDisplayHelper.FormatStatus(snapshot.StatusMessage);
-            if (!string.IsNullOrWhiteSpace(statText))
+            string statusText;
+            Brush statusBrush;
+
+            // Override with activity detection if input activity is detected
+            if (_inputActivityDetected)
             {
-                lines.Add((statText, statBrush));
+                statusText = LocalizationManager.GetString("Status_ActivityDetected");
+                statusBrush = Brushes.Orange;
+            }
+            else
+            {
+                var (statText, statBrush) = StatusDisplayHelper.FormatStatus(snapshot.StatusMessage);
+                statusText = statText;
+                statusBrush = statBrush;
+            }
+
+            if (!string.IsNullOrWhiteSpace(statusText))
+            {
+                lines.Add((statusText, statusBrush));
             }
         }
 
@@ -236,7 +299,7 @@ public class TrayIconService : IDisposable
         _tooltipWindow = new TrayTooltipWindow();
         _tooltipHideTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(800)
+            Interval = TimeSpan.FromMilliseconds(2000) // 2 seconds instead of 200ms
         };
         _tooltipHideTimer.Tick += (_, _) => HideTooltipWindow();
     }
@@ -249,7 +312,9 @@ public class TrayIconService : IDisposable
         }
 
         var lines = BuildTooltipLines(_lastSnapshot);
+        var currentContent = string.Join("\n", lines.Select(l => l.Text));
         _tooltipWindow.UpdateLines(lines);
+        _lastTooltipContent = currentContent;
         PositionTooltipWindow();
 
         if (!_tooltipWindow.IsVisible)
@@ -259,6 +324,7 @@ public class TrayIconService : IDisposable
             PositionTooltipWindow();
         }
 
+        // Reset the 2-second timer on mouse movement
         _tooltipHideTimer?.Stop();
         _tooltipHideTimer?.Start();
     }
@@ -292,21 +358,22 @@ public class TrayIconService : IDisposable
 
     private void UpdateTooltipWindow()
     {
-        if (_tooltipWindow == null || _lastSnapshot == null)
+        if (_tooltipWindow == null || _lastSnapshot == null || !_tooltipWindow.IsVisible)
         {
             return;
         }
 
         var lines = BuildTooltipLines(_lastSnapshot);
-        _tooltipWindow.UpdateLines(lines);
-        PositionTooltipWindow();
+        var currentContent = string.Join("\n", lines.Select(l => l.Text));
 
-        if (_tooltipWindow.IsVisible)
+        // Only update if content actually changed to prevent flickering
+        if (currentContent != _lastTooltipContent)
         {
-            _tooltipHideTimer?.Stop();
-            _tooltipHideTimer?.Start();
+            _tooltipWindow.UpdateLines(lines);
+            _lastTooltipContent = currentContent;
         }
     }
+
 
     private void HideTooltipWindow()
     {
@@ -354,6 +421,7 @@ public class TrayIconService : IDisposable
     {
         _monitoringService.SnapshotAvailable -= MonitoringServiceOnSnapshotAvailable;
         _monitoringService.SleepTriggered -= MonitoringServiceOnSleepTriggered;
+        Utilities.InputActivityReader.InputActivityDetected -= OnInputActivityDetected;
         if (_notifyIcon != null)
         {
             _notifyIcon.MouseMove -= NotifyIconOnMouseMove;
@@ -368,6 +436,8 @@ public class TrayIconService : IDisposable
         _tooltipWindow = null;
         _tooltipHideTimer?.Stop();
         _tooltipHideTimer = null;
+        _inputActivityTimer?.Stop();
+        _inputActivityTimer = null;
 
         _iconResource?.Dispose();
         _iconResource = null;

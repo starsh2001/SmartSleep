@@ -8,16 +8,14 @@
     <sys:String x:Key="Settings_Title">SmartSleep Settings</sys:String>
     <sys:String x:Key="Settings_Section_CurrentStatus">Current Status</sys:String>
     <sys:String x:Key="Settings_Section_Monitoring">Monitoring Criteria</sys:String>
+    <sys:String x:Key="Settings_IdleTime">Idle time required:</sys:String>
     <sys:String x:Key="Settings_UseInputActivity">Monitor mouse/keyboard activity</sys:String>
     <sys:String x:Key="Settings_IncludeGamepadInput">Include gamepad input</sys:String>
-    <sys:String x:Key="Settings_InputIdleThreshold">Input idle threshold (s):</sys:String>
     <sys:String x:Key="Settings_UseCpuActivity">Monitor CPU activity</sys:String>
     <sys:String x:Key="Settings_CpuThreshold">CPU threshold (%):</sys:String>
-    <sys:String x:Key="Settings_CpuIdleDuration">CPU idle duration required (s):</sys:String>
     <sys:String x:Key="Settings_CpuSmoothingWindow">CPU moving average samples:</sys:String>
     <sys:String x:Key="Settings_UseNetworkActivity">Monitor network activity</sys:String>
     <sys:String x:Key="Settings_NetworkThreshold">Network threshold (KB/s):</sys:String>
-    <sys:String x:Key="Settings_NetworkIdleDuration">Network idle duration required (s):</sys:String>
     <sys:String x:Key="Settings_NetworkSmoothingWindow">Network moving average samples:</sys:String>
     <sys:String x:Key="Settings_PollingInterval">Sampling interval (s):</sys:String>
     <sys:String x:Key="Settings_Section_Schedule">Monitoring Schedule</sys:String>
@@ -79,10 +77,23 @@
     <sys:String x:Key="LiveStatus_NetworkInactive">Network {0:F0}KB/s (not monitored)</sys:String>
     <sys:String x:Key="LiveStatus_Conditions">Conditions {0}/{1}</sys:String>
     <sys:String x:Key="LiveStatus_ConditionsDisabled">Conditions disabled</sys:String>
+    <sys:String x:Key="LiveStatus_InputWaiting">Input: waiting</sys:String>
+    <sys:String x:Key="LiveStatus_InputActive">Input: activity detected</sys:String>
+    <sys:String x:Key="LiveStatus_InputDisabled">Input: disabled</sys:String>
+    <sys:String x:Key="LiveStatus_Cpu">CPU {0:F1}% / {1:F1}%</sys:String>
+    <sys:String x:Key="LiveStatus_CpuDisabled">CPU {0:F1}% (disabled)</sys:String>
+    <sys:String x:Key="LiveStatus_Network">Network {0:F0}KB/s / {1:F0}KB/s</sys:String>
+    <sys:String x:Key="LiveStatus_NetworkDisabled">Network {0:F0}KB/s (disabled)</sys:String>
+    <sys:String x:Key="Status_ActivityDetected">Activity detected</sys:String>
+    <sys:String x:Key="Detail_Input">Input</sys:String>
+    <sys:String x:Key="Detail_InputActive">Input activity</sys:String>
+    <sys:String x:Key="Detail_Cpu">CPU</sys:String>
+    <sys:String x:Key="Detail_Network">Network</sys:String>
 
     <sys:String x:Key="Status_DisplayPrefix">[Status] {0}</sys:String>
     <sys:String x:Key="StatusKeyword_Sleep">sleep</sys:String>
     <sys:String x:Key="StatusKeyword_Request">request</sys:String>
+    <sys:String x:Key="StatusKeyword_Shutdown">shutdown</sys:String>
     <sys:String x:Key="StatusKeyword_CPU">CPU</sys:String>
     <sys:String x:Key="StatusKeyword_Network">network</sys:String>
 

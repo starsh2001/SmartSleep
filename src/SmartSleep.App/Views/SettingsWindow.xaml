@@ -19,30 +19,28 @@
             <StackPanel VerticalAlignment="Top">
                 <TextBlock Text="{DynamicResource Settings_Section_CurrentStatus}" FontWeight="Bold" FontSize="14"/>
                 <StackPanel Margin="0,8,0,16">
-                    <TextBlock Text="{Binding LiveInputStatus}"/>
-                    <TextBlock Text="{Binding LiveCpuStatus}" Margin="0,2,0,0"/>
-                    <TextBlock Text="{Binding LiveNetworkStatus}" Margin="0,2,0,0"/>
-                    <TextBlock Text="{Binding LiveCombinationStatus}" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding LiveInputStatus}" Foreground="{Binding LiveInputBrush}"/>
+                    <TextBlock Text="{Binding LiveCpuStatus}" Margin="0,2,0,0" Foreground="{Binding LiveCpuBrush}"/>
+                    <TextBlock Text="{Binding LiveNetworkStatus}" Margin="0,2,0,0" Foreground="{Binding LiveNetworkBrush}"/>
                     <TextBlock Text="{Binding LiveStatusMessage}" Margin="0,4,0,0" Foreground="{Binding LiveStatusBrush}"/>
                 </StackPanel>
 
                 <TextBlock Text="{DynamicResource Settings_Section_Monitoring}" FontWeight="Bold" FontSize="14"/>
                 <StackPanel Margin="0,8,0,16">
+                    <!-- Unified idle time setting -->
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
+                        <TextBlock Text="{DynamicResource Settings_IdleTime}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <TextBox Width="80" Margin="8,0,0,0" Text="{Binding IdleTimeSeconds, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="seconds" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="Gray"/>
+                    </StackPanel>
+
                     <CheckBox Content="{DynamicResource Settings_UseInputActivity}" IsChecked="{Binding UseInputActivity}"/>
                     <CheckBox Content="{DynamicResource Settings_IncludeGamepadInput}" IsChecked="{Binding IncludeGamepadInput}" IsEnabled="{Binding UseInputActivity}" Margin="24,4,0,0"/>
-                    <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
-                        <TextBlock Text="{DynamicResource Settings_InputIdleThreshold}" VerticalAlignment="Center"/>
-                        <TextBox Width="80" Margin="8,0,0,0" IsEnabled="{Binding UseInputActivity}" Text="{Binding InputIdleSeconds, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
 
                     <CheckBox Content="{DynamicResource Settings_UseCpuActivity}" IsChecked="{Binding UseCpuActivity}" Margin="0,12,0,0"/>
                     <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
                         <TextBlock Text="{DynamicResource Settings_CpuThreshold}" VerticalAlignment="Center"/>
                         <TextBox Width="80" Margin="8,0,0,0" IsEnabled="{Binding UseCpuActivity}" Text="{Binding CpuUsageThreshold, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
-                        <TextBlock Text="{DynamicResource Settings_CpuIdleDuration}" VerticalAlignment="Center"/>
-                        <TextBox Width="80" Margin="8,0,0,0" IsEnabled="{Binding UseCpuActivity}" Text="{Binding CpuIdleDurationSeconds, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
                         <TextBlock Text="{DynamicResource Settings_CpuSmoothingWindow}" VerticalAlignment="Center"/>
@@ -53,10 +51,6 @@
                     <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
                         <TextBlock Text="{DynamicResource Settings_NetworkThreshold}" VerticalAlignment="Center"/>
                         <TextBox Width="80" Margin="8,0,0,0" IsEnabled="{Binding UseNetworkActivity}" Text="{Binding NetworkThreshold, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
-                        <TextBlock Text="{DynamicResource Settings_NetworkIdleDuration}" VerticalAlignment="Center"/>
-                        <TextBox Width="80" Margin="8,0,0,0" IsEnabled="{Binding UseNetworkActivity}" Text="{Binding NetworkIdleDurationSeconds, UpdateSourceTrigger=PropertyChanged}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
                         <TextBlock Text="{DynamicResource Settings_NetworkSmoothingWindow}" VerticalAlignment="Center"/>

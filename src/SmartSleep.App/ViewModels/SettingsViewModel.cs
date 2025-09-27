@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using SmartSleep.App.Models;
 using SmartSleep.App.Utilities;
 using System.Windows.Media;
 using System.Windows;
+using System.Windows.Threading;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 
@@ -10,18 +12,30 @@ namespace SmartSleep.App.ViewModels;
 
 public class SettingsViewModel : ViewModelBase
 {
+    private static bool _inputMonitoringInitialized = false;
+    private static readonly object _initLock = new object();
+
     private bool _useInputActivity;
     private bool _includeGamepadInput = true;
-    private int _inputIdleSeconds = 1200;
     private bool _useCpuActivity;
     private double _cpuUsageThreshold = 10.0;
-    private int _cpuIdleDurationSeconds = 600;
     private int _cpuSmoothingWindow = 5;
     private bool _useNetworkActivity;
     private double _networkThreshold = 128.0;
-    private int _networkIdleDurationSeconds = 600;
     private int _networkSmoothingWindow = 5;
+
+    // Unified idle time for all conditions
+    private int _idleTimeSeconds = 1200;
     private int _pollingIntervalSeconds;
+
+    // Activity indicators
+    private bool _inputActivityDetected = false;
+    private bool _cpuActivityDetected = false;
+    private bool _networkActivityDetected = false;
+    private DispatcherTimer? _inputActivityTimer;
+    private DispatcherTimer? _cpuActivityTimer;
+    private DispatcherTimer? _networkActivityTimer;
+    private MonitoringSnapshot? _previousSnapshot;
     // Schedule mode
     private ScheduleMode _scheduleMode = ScheduleMode.Always;
     private string _dailyStartText = "22:00";
@@ -74,7 +88,6 @@ public class SettingsViewModel : ViewModelBase
     private string _liveInputStatus = "입력 유휴: 수집 중";
     private string _liveCpuStatus = string.Empty;
     private string _liveNetworkStatus = string.Empty;
-    private string _liveCombinationStatus = string.Empty;
     private string _liveStatusMessage = string.Empty;
     private Brush _liveStatusBrush = Brushes.SlateGray;
     private MonitoringSnapshot? _lastSnapshot;
@@ -103,12 +116,12 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
-    public int InputIdleSeconds
+    public int IdleTimeSeconds
     {
-        get => _inputIdleSeconds;
+        get => _idleTimeSeconds;
         set
         {
-            if (SetProperty(ref _inputIdleSeconds, value))
+            if (SetProperty(ref _idleTimeSeconds, value))
             {
                 RefreshLiveStatus();
             }
@@ -139,17 +152,6 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
-    public int CpuIdleDurationSeconds
-    {
-        get => _cpuIdleDurationSeconds;
-        set
-        {
-            if (SetProperty(ref _cpuIdleDurationSeconds, value))
-            {
-                RefreshLiveStatus();
-            }
-        }
-    }
 
     public int CpuSmoothingWindow
     {
@@ -187,17 +189,6 @@ public class SettingsViewModel : ViewModelBase
         }
     }
 
-    public int NetworkIdleDurationSeconds
-    {
-        get => _networkIdleDurationSeconds;
-        set
-        {
-            if (SetProperty(ref _networkIdleDurationSeconds, value))
-            {
-                RefreshLiveStatus();
-            }
-        }
-    }
 
     public int NetworkSmoothingWindow
     {
@@ -579,11 +570,6 @@ public class SettingsViewModel : ViewModelBase
         private set => SetProperty(ref _liveNetworkStatus, value);
     }
 
-    public string LiveCombinationStatus
-    {
-        get => _liveCombinationStatus;
-        private set => SetProperty(ref _liveCombinationStatus, value);
-    }
 
     public string LiveStatusMessage
     {
@@ -594,6 +580,21 @@ public class SettingsViewModel : ViewModelBase
     {
         get => _liveStatusBrush;
         private set => SetProperty(ref _liveStatusBrush, value);
+    }
+
+    public Brush LiveInputBrush
+    {
+        get => _inputActivityDetected ? Brushes.Orange : Brushes.Black;
+    }
+
+    public Brush LiveCpuBrush
+    {
+        get => _cpuActivityDetected ? Brushes.Orange : Brushes.Black;
+    }
+
+    public Brush LiveNetworkBrush
+    {
+        get => _networkActivityDetected ? Brushes.Orange : Brushes.Black;
     }
 
     public AppLanguage Language
@@ -618,15 +619,13 @@ public class SettingsViewModel : ViewModelBase
         {
             UseInputActivity = config.Idle.UseInputActivity,
             IncludeGamepadInput = config.Idle.IncludeGamepadInput,
-            InputIdleSeconds = config.Idle.InputIdleThresholdSeconds,
             UseCpuActivity = config.Idle.UseCpuActivity,
             CpuUsageThreshold = config.Idle.CpuUsagePercentageThreshold,
-            CpuIdleDurationSeconds = config.Idle.CpuIdleDurationSeconds,
             CpuSmoothingWindow = config.Idle.CpuSmoothingWindow,
             UseNetworkActivity = config.Idle.UseNetworkActivity,
             NetworkThreshold = config.Idle.NetworkKilobytesPerSecondThreshold,
-            NetworkIdleDurationSeconds = config.Idle.NetworkIdleDurationSeconds,
             NetworkSmoothingWindow = config.Idle.NetworkSmoothingWindow,
+            IdleTimeSeconds = config.Idle.IdleTimeSeconds,
             PollingIntervalSeconds = config.PollingIntervalSeconds,
             // Schedule mode
             ScheduleMode = config.Schedule.Mode,
@@ -679,9 +678,9 @@ public class SettingsViewModel : ViewModelBase
 
     public bool TryValidate(out string validationError)
     {
-        if (InputIdleSeconds < 0)
+        if (IdleTimeSeconds < 0)
         {
-            validationError = "Input idle time must be 0 or greater.";
+            validationError = "Idle time must be 0 or greater.";
             return false;
         }
 
@@ -690,12 +689,6 @@ public class SettingsViewModel : ViewModelBase
             if (CpuUsageThreshold < 0 || CpuUsageThreshold > 100)
             {
                 validationError = "CPU threshold must be between 0 and 100.";
-                return false;
-            }
-
-            if (CpuIdleDurationSeconds < 0)
-            {
-                validationError = "CPU idle duration must be 0 or greater.";
                 return false;
             }
         }
@@ -711,12 +704,6 @@ public class SettingsViewModel : ViewModelBase
             if (NetworkThreshold < 0)
             {
                 validationError = "Network threshold must be 0 or greater.";
-                return false;
-            }
-
-            if (NetworkIdleDurationSeconds < 0)
-            {
-                validationError = "Network idle duration must be 0 or greater.";
                 return false;
             }
         }
@@ -795,15 +782,13 @@ public class SettingsViewModel : ViewModelBase
         var config = existing.Clone();
         config.Idle.UseInputActivity = UseInputActivity;
         config.Idle.IncludeGamepadInput = IncludeGamepadInput;
-        config.Idle.InputIdleThresholdSeconds = InputIdleSeconds;
         config.Idle.UseCpuActivity = UseCpuActivity;
         config.Idle.CpuUsagePercentageThreshold = CpuUsageThreshold;
-        config.Idle.CpuIdleDurationSeconds = CpuIdleDurationSeconds;
         config.Idle.CpuSmoothingWindow = CpuSmoothingWindow;
         config.Idle.UseNetworkActivity = UseNetworkActivity;
         config.Idle.NetworkKilobytesPerSecondThreshold = NetworkThreshold;
-        config.Idle.NetworkIdleDurationSeconds = NetworkIdleDurationSeconds;
         config.Idle.NetworkSmoothingWindow = NetworkSmoothingWindow;
+        config.Idle.IdleTimeSeconds = IdleTimeSeconds;
         config.PollingIntervalSeconds = PollingIntervalSeconds;
         config.StartWithWindows = StartWithWindows;
         config.PowerAction = PowerAction;
@@ -918,12 +903,25 @@ public class SettingsViewModel : ViewModelBase
 
     public void RefreshLiveStatus()
     {
+        // Initialize input monitoring once
+        if (!_inputMonitoringInitialized)
+        {
+            lock (_initLock)
+            {
+                if (!_inputMonitoringInitialized)
+                {
+                    Utilities.InputActivityReader.InputActivityDetected += OnInputActivityDetected;
+                    Utilities.InputActivityReader.StartInputMonitoring();
+                    _inputMonitoringInitialized = true;
+                }
+            }
+        }
+
         if (_lastSnapshot == null)
         {
-            LiveInputStatus = "Input: Collecting"; // TODO: Add localized collecting text
+            LiveInputStatus = LocalizationManager.GetString("LiveStatus_InputWaiting");
             LiveCpuStatus = string.Empty;
             LiveNetworkStatus = string.Empty;
-            LiveCombinationStatus = string.Empty;
             LiveStatusMessage = string.Empty;
             LiveStatusBrush = Brushes.SlateGray;
             return;
@@ -931,45 +929,112 @@ public class SettingsViewModel : ViewModelBase
 
         var snapshot = _lastSnapshot;
 
+        // Detect activity changes
+        DetectActivityChanges(snapshot);
+
+        // Update individual status lines (simplified format without numbers)
         if (snapshot.InputMonitoringEnabled)
         {
-            LiveInputStatus = LocalizationManager.Format("Tooltip_InputActive", snapshot.InputIdle.TotalSeconds, snapshot.InputIdleRequirement.TotalSeconds);
+            LiveInputStatus = _inputActivityDetected
+                ? LocalizationManager.GetString("LiveStatus_InputActive") // "입력: 활동 감지됨"
+                : LocalizationManager.GetString("LiveStatus_InputWaiting"); // "입력: 대기중"
         }
         else
         {
-            LiveInputStatus = LocalizationManager.Format("Tooltip_InputInactive", snapshot.InputIdle.TotalSeconds);
+            LiveInputStatus = LocalizationManager.GetString("LiveStatus_InputDisabled"); // "입력: 비활성화"
         }
 
         if (snapshot.CpuMonitoringEnabled)
         {
-            LiveCpuStatus = LocalizationManager.Format("Tooltip_CpuActive", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent, snapshot.CpuIdleDuration.TotalSeconds, snapshot.CpuIdleRequirement.TotalSeconds);
+            LiveCpuStatus = LocalizationManager.Format("LiveStatus_Cpu", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent);
         }
         else
         {
-            LiveCpuStatus = LocalizationManager.Format("Tooltip_CpuInactive", snapshot.CpuUsagePercent);
+            LiveCpuStatus = LocalizationManager.Format("LiveStatus_CpuDisabled", snapshot.CpuUsagePercent);
         }
 
         if (snapshot.NetworkMonitoringEnabled)
         {
-            LiveNetworkStatus = LocalizationManager.Format("Tooltip_NetworkActive", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond, snapshot.NetworkIdleDuration.TotalSeconds, snapshot.NetworkIdleRequirement.TotalSeconds);
+            LiveNetworkStatus = LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond);
         }
         else
         {
-            LiveNetworkStatus = LocalizationManager.Format("Tooltip_NetworkInactive", snapshot.NetworkKilobytesPerSecond);
+            LiveNetworkStatus = LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobytesPerSecond);
         }
 
-        if (snapshot.EnabledConditionCount > 0)
-        {
-            LiveCombinationStatus = LocalizationManager.Format("Tooltip_Conditions", snapshot.SatisfiedConditionCount, snapshot.EnabledConditionCount);
-        }
-        else
-        {
-            LiveCombinationStatus = LocalizationManager.GetString("Status_NoConditions");
-        }
+        // Conditions count display removed - no longer needed with real-time activity detection
 
+        // Main status message - add activity detection here too
         var statusText = snapshot.StatusMessage;
+        if (_inputActivityDetected || _cpuActivityDetected || _networkActivityDetected)
+        {
+            statusText = LocalizationManager.GetString("Status_ActivityDetected");
+        }
+
         var (displayText, brush) = StatusDisplayHelper.FormatStatus(statusText);
         LiveStatusMessage = displayText;
-        LiveStatusBrush = brush;
+        LiveStatusBrush = (_inputActivityDetected || _cpuActivityDetected || _networkActivityDetected)
+            ? Brushes.Orange : brush;
+
+        // Notify property changes for brushes
+        OnPropertyChanged(nameof(LiveInputBrush));
+        OnPropertyChanged(nameof(LiveCpuBrush));
+        OnPropertyChanged(nameof(LiveNetworkBrush));
+
+        _previousSnapshot = snapshot;
     }
+
+    private void OnInputActivityDetected(object? sender, EventArgs e)
+    {
+        _inputActivityDetected = true;
+        _inputActivityTimer?.Stop();
+        _inputActivityTimer = StartActivityTimer(() => _inputActivityDetected = false);
+        RefreshLiveStatus(); // Update UI immediately
+    }
+
+    private void DetectActivityChanges(MonitoringSnapshot snapshot)
+    {
+        // Input activity detection is now handled by event from InputActivityReader
+
+        // Detect CPU activity (when usage exceeds threshold)
+        if (snapshot.CpuMonitoringEnabled)
+        {
+            bool cpuActive = snapshot.CpuUsagePercent > snapshot.CpuThresholdPercent;
+            if (cpuActive)
+            {
+                _cpuActivityDetected = true;
+                _cpuActivityTimer?.Stop();
+                _cpuActivityTimer = StartActivityTimer(() => _cpuActivityDetected = false);
+            }
+        }
+
+        // Detect network activity (when usage exceeds threshold)
+        if (snapshot.NetworkMonitoringEnabled)
+        {
+            bool networkActive = snapshot.NetworkKilobytesPerSecond > snapshot.NetworkThresholdKilobytesPerSecond;
+            if (networkActive)
+            {
+                _networkActivityDetected = true;
+                _networkActivityTimer?.Stop();
+                _networkActivityTimer = StartActivityTimer(() => _networkActivityDetected = false);
+            }
+        }
+    }
+
+    private DispatcherTimer StartActivityTimer(Action onComplete)
+    {
+        var timer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(500)
+        };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            onComplete();
+            RefreshLiveStatus(); // Refresh to update colors
+        };
+        timer.Start();
+        return timer;
+    }
+
 }
