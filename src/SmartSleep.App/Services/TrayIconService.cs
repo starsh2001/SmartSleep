@@ -32,6 +32,7 @@ public class TrayIconService : IDisposable
     private bool _inputActivityDetected = false;
     private DispatcherTimer? _inputActivityTimer;
     private string _lastTooltipContent = string.Empty;
+    private DispatcherTimer? _mouseLeaveCheckTimer;
 
     public TrayIconService(MonitoringService monitoringService,
                            Func<SettingsWindow> settingsWindowFactory,
@@ -302,6 +303,13 @@ public class TrayIconService : IDisposable
             Interval = TimeSpan.FromMilliseconds(2000) // 2 seconds instead of 200ms
         };
         _tooltipHideTimer.Tick += (_, _) => HideTooltipWindow();
+
+        // Timer to check if mouse left the tray area
+        _mouseLeaveCheckTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(100) // Check every 100ms
+        };
+        _mouseLeaveCheckTimer.Tick += CheckMouseLeave;
     }
 
     private void ShowTooltipWindow()
@@ -324,9 +332,12 @@ public class TrayIconService : IDisposable
             PositionTooltipWindow();
         }
 
-        // Reset the 2-second timer on mouse movement
+        // Stop the 2-second timer while mouse is over icon
         _tooltipHideTimer?.Stop();
-        _tooltipHideTimer?.Start();
+
+        // Start checking for mouse leave
+        _mouseLeaveCheckTimer?.Stop();
+        _mouseLeaveCheckTimer?.Start();
     }
 
     private void PositionTooltipWindow()
@@ -375,9 +386,77 @@ public class TrayIconService : IDisposable
     }
 
 
+    private void CheckMouseLeave(object? sender, EventArgs e)
+    {
+        if (_tooltipWindow == null || !_tooltipWindow.IsVisible || _notifyIcon == null)
+        {
+            _mouseLeaveCheckTimer?.Stop();
+            return;
+        }
+
+        try
+        {
+            var mousePos = Forms.Control.MousePosition;
+
+            // Try to get the exact NotifyIcon rectangle using Windows API
+            if (NotifyIconNative.TryGetNotifyIconRect(_notifyIcon, out var iconRect))
+            {
+                // Add some padding around the icon for better UX
+                var paddedRect = new System.Drawing.Rectangle(
+                    iconRect.X - 5,
+                    iconRect.Y - 5,
+                    iconRect.Width + 10,
+                    iconRect.Height + 10
+                );
+
+                // If mouse is not in the padded icon area, hide tooltip immediately
+                if (!paddedRect.Contains(mousePos))
+                {
+                    _mouseLeaveCheckTimer?.Stop();
+                    HideTooltipWindow();
+                }
+                else
+                {
+                    // Mouse is still in icon area - keep 2-second timer stopped
+                    _tooltipHideTimer?.Stop();
+                }
+            }
+            else
+            {
+                // Fallback: use approximate tray area detection
+                var workingArea = SystemParameters.WorkArea;
+                var screenHeight = SystemParameters.PrimaryScreenHeight;
+                var screenWidth = SystemParameters.PrimaryScreenWidth;
+
+                var trayArea = new System.Drawing.Rectangle(
+                    (int)(screenWidth - 100), // Smaller area for fallback
+                    (int)(workingArea.Bottom),
+                    100,
+                    (int)(screenHeight - workingArea.Bottom)
+                );
+
+                if (!trayArea.Contains(mousePos))
+                {
+                    _mouseLeaveCheckTimer?.Stop();
+                    HideTooltipWindow();
+                }
+                else
+                {
+                    // Mouse is still in tray area - keep 2-second timer stopped
+                    _tooltipHideTimer?.Stop();
+                }
+            }
+        }
+        catch
+        {
+            // If we can't detect mouse position, fall back to normal timer behavior
+        }
+    }
+
     private void HideTooltipWindow()
     {
         _tooltipHideTimer?.Stop();
+        _mouseLeaveCheckTimer?.Stop();
 
         if (_tooltipWindow is { IsVisible: true })
         {
@@ -438,6 +517,8 @@ public class TrayIconService : IDisposable
         _tooltipHideTimer = null;
         _inputActivityTimer?.Stop();
         _inputActivityTimer = null;
+        _mouseLeaveCheckTimer?.Stop();
+        _mouseLeaveCheckTimer = null;
 
         _iconResource?.Dispose();
         _iconResource = null;
@@ -491,6 +572,15 @@ public class TrayIconService : IDisposable
 
         [DllImport("shell32.dll", CharSet = CharSet.Unicode, EntryPoint = "Shell_NotifyIconW")]
         internal static extern bool ShellNotifyIcon(NIM message, ref NOTIFYICONDATA data);
+
+        [DllImport("shell32.dll")]
+        internal static extern IntPtr Shell_NotifyIconGetRect([In] ref NOTIFYICONIDENTIFIER identifier, [Out] out RECT iconLocation);
+
+        [DllImport("user32.dll")]
+        internal static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+
+        [DllImport("user32.dll")]
+        internal static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, string lpszClass, string lpszWindow);
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         internal struct NOTIFYICONDATA
@@ -546,6 +636,59 @@ public class TrayIconService : IDisposable
             DELETE = 0x00000002,
             SETFOCUS = 0x00000003,
             SETVERSION = 0x00000004
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct NOTIFYICONIDENTIFIER
+        {
+            public int cbSize;
+            public IntPtr hWnd;
+            public uint uID;
+            public Guid guidItem;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+
+            public int Width => Right - Left;
+            public int Height => Bottom - Top;
+        }
+
+        internal static bool TryGetNotifyIconRect(Forms.NotifyIcon icon, out System.Drawing.Rectangle rect)
+        {
+            rect = System.Drawing.Rectangle.Empty;
+
+            try
+            {
+                if (!TryBuildData(icon, out var data))
+                    return false;
+
+                var identifier = new NOTIFYICONIDENTIFIER
+                {
+                    cbSize = Marshal.SizeOf<NOTIFYICONIDENTIFIER>(),
+                    hWnd = data.hWnd,
+                    uID = data.uID,
+                    guidItem = data.guidItem
+                };
+
+                var result = Shell_NotifyIconGetRect(ref identifier, out RECT iconRect);
+                if (result == IntPtr.Zero) // S_OK
+                {
+                    rect = new System.Drawing.Rectangle(iconRect.Left, iconRect.Top, iconRect.Width, iconRect.Height);
+                    return true;
+                }
+            }
+            catch
+            {
+                // Fall back to detection method
+            }
+
+            return false;
         }
     }
 
