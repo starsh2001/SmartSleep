@@ -487,23 +487,36 @@ public class MonitoringService : IDisposable
 
     private void TriggerSleep()
     {
+        AppConfig currentConfig;
+        lock (_configLock)
+        {
+            currentConfig = _config.Clone();
+        }
+
         var attemptUtc = DateTime.UtcNow;
         var previousSuccess = _lastSleepSuccessUtc;
 
-        if (_sleepService.TryEnterSleep(out var errorCode))
+        var actionText = currentConfig.PowerAction switch
+        {
+            Models.PowerAction.Sleep => "절전",
+            Models.PowerAction.Shutdown => "시스템 종료",
+            _ => "전원"
+        };
+
+        if (_sleepService.TryExecutePowerAction(currentConfig.PowerAction, out var errorCode))
         {
             _lastSleepSuccessUtc = attemptUtc;
             var lastSuccessText = previousSuccess.HasValue
                 ? previousSuccess.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
                 : "기록 없음";
-            SleepTriggered?.Invoke(this, $"절전 명령 전송 (마지막 성공: {lastSuccessText})");
+            SleepTriggered?.Invoke(this, $"{actionText} 명령 전송 (마지막 성공: {lastSuccessText})");
         }
         else
         {
             var lastSuccessText = _lastSleepSuccessUtc.HasValue
                 ? _lastSleepSuccessUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
                 : "기록 없음";
-            SleepTriggered?.Invoke(this, $"절전 모드 진입 실패 (오류 코드: {errorCode}, 마지막 성공: {lastSuccessText})");
+            SleepTriggered?.Invoke(this, $"{actionText} 실행 실패 (오류 코드: {errorCode}, 마지막 성공: {lastSuccessText})");
         }
     }
 

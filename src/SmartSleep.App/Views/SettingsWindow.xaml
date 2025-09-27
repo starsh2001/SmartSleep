@@ -212,6 +212,17 @@
                     </StackPanel>
                 </StackPanel>
 
+                <TextBlock Text="전원 관리" FontWeight="Bold" FontSize="14"/>
+                <StackPanel Margin="0,8,0,16">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                        <TextBlock Text="실행할 동작:" VerticalAlignment="Center"/>
+                        <ComboBox Width="150" Margin="8,0,0,0" SelectedValuePath="Tag" SelectedValue="{Binding PowerAction}">
+                            <ComboBoxItem Content="절전 모드" Tag="{x:Static models:PowerAction.Sleep}"/>
+                            <ComboBoxItem Content="시스템 종료" Tag="{x:Static models:PowerAction.Shutdown}"/>
+                        </ComboBox>
+                    </StackPanel>
+                </StackPanel>
+
                 <TextBlock Text="기타" FontWeight="Bold" FontSize="14"/>
                 <StackPanel Margin="0,8,0,16">
                     <CheckBox Content="Windows 시작 시 자동 실행" IsChecked="{Binding StartWithWindows}"/>

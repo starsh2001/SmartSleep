@@ -62,6 +62,7 @@ public class SettingsViewModel : ViewModelBase
     private string _sundayStartText = "00:00";
     private string _sundayEndText = "00:00";
     private bool _startWithWindows;
+    private PowerAction _powerAction = PowerAction.Sleep;
     private int _sleepCooldownSeconds = 45;
     private string _statusMessage = string.Empty;
 
@@ -423,6 +424,12 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _startWithWindows, value);
     }
 
+    public PowerAction PowerAction
+    {
+        get => _powerAction;
+        set => SetProperty(ref _powerAction, value);
+    }
+
 
     public int SleepCooldownSeconds
     {
@@ -529,6 +536,7 @@ public class SettingsViewModel : ViewModelBase
             SundayStartText = config.Schedule.Sunday.StartTime.ToString("hh\\:mm"),
             SundayEndText = config.Schedule.Sunday.EndTime.ToString("hh\\:mm"),
             StartWithWindows = config.StartWithWindows,
+            PowerAction = config.PowerAction,
             SleepCooldownSeconds = cooldown
         };
     }
@@ -646,6 +654,7 @@ public class SettingsViewModel : ViewModelBase
         config.Idle.NetworkSmoothingWindow = NetworkSmoothingWindow;
         config.PollingIntervalSeconds = PollingIntervalSeconds;
         config.StartWithWindows = StartWithWindows;
+        config.PowerAction = PowerAction;
         config.SleepCooldownSeconds = Math.Max(10, SleepCooldownSeconds);
 
         // Schedule mode
