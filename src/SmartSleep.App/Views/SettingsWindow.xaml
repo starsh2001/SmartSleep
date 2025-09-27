@@ -29,6 +29,7 @@
                 <TextBlock Text="모니터링 기준" FontWeight="Bold" FontSize="14"/>
                 <StackPanel Margin="0,8,0,16">
                     <CheckBox Content="마우스/키보드 활동 사용" IsChecked="{Binding UseInputActivity}"/>
+                    <CheckBox Content="게임패드 입력 포함" IsChecked="{Binding IncludeGamepadInput}" IsEnabled="{Binding UseInputActivity}" Margin="24,4,0,0"/>
                     <StackPanel Orientation="Horizontal" Margin="24,4,0,0">
                         <TextBlock Text="입력 유휴 판정 (초):" VerticalAlignment="Center"/>
                         <TextBox Width="80" Margin="8,0,0,0" IsEnabled="{Binding UseInputActivity}" Text="{Binding InputIdleSeconds, UpdateSourceTrigger=PropertyChanged}"/>
@@ -232,6 +233,7 @@
                 <TextBlock Text="기타" FontWeight="Bold" FontSize="14"/>
                 <StackPanel Margin="0,8,0,16">
                     <CheckBox Content="Windows 시작 시 자동 실행" IsChecked="{Binding StartWithWindows}"/>
+                    <CheckBox Content="절전/종료 로그 남기기" IsChecked="{Binding EnableSleepLogging}" Margin="0,8,0,0"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

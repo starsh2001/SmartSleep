@@ -11,6 +11,7 @@ namespace SmartSleep.App.ViewModels;
 public class SettingsViewModel : ViewModelBase
 {
     private bool _useInputActivity;
+    private bool _includeGamepadInput = true;
     private int _inputIdleSeconds = 1200;
     private bool _useCpuActivity;
     private double _cpuUsageThreshold = 10.0;
@@ -65,6 +66,7 @@ public class SettingsViewModel : ViewModelBase
     private PowerAction _powerAction = PowerAction.Sleep;
     private bool _showConfirmationDialog = false;
     private int _confirmationCountdownSeconds = 10;
+    private bool _enableSleepLogging = true;
     private int _sleepCooldownSeconds = 45;
     private string _statusMessage = string.Empty;
 
@@ -82,6 +84,18 @@ public class SettingsViewModel : ViewModelBase
         set
         {
             if (SetProperty(ref _useInputActivity, value))
+            {
+                RefreshLiveStatus();
+            }
+        }
+    }
+
+    public bool IncludeGamepadInput
+    {
+        get => _includeGamepadInput;
+        set
+        {
+            if (SetProperty(ref _includeGamepadInput, value))
             {
                 RefreshLiveStatus();
             }
@@ -444,6 +458,12 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _confirmationCountdownSeconds, value);
     }
 
+    public bool EnableSleepLogging
+    {
+        get => _enableSleepLogging;
+        set => SetProperty(ref _enableSleepLogging, value);
+    }
+
     public int SleepCooldownSeconds
     {
         get => _sleepCooldownSeconds;
@@ -499,6 +519,7 @@ public class SettingsViewModel : ViewModelBase
         return new SettingsViewModel
         {
             UseInputActivity = config.Idle.UseInputActivity,
+            IncludeGamepadInput = config.Idle.IncludeGamepadInput,
             InputIdleSeconds = config.Idle.InputIdleThresholdSeconds,
             UseCpuActivity = config.Idle.UseCpuActivity,
             CpuUsageThreshold = config.Idle.CpuUsagePercentageThreshold,
@@ -552,6 +573,7 @@ public class SettingsViewModel : ViewModelBase
             PowerAction = config.PowerAction,
             ShowConfirmationDialog = config.ShowConfirmationDialog,
             ConfirmationCountdownSeconds = config.ConfirmationCountdownSeconds,
+            EnableSleepLogging = config.EnableSleepLogging,
             SleepCooldownSeconds = cooldown
         };
     }
@@ -658,6 +680,7 @@ public class SettingsViewModel : ViewModelBase
     {
         var config = existing.Clone();
         config.Idle.UseInputActivity = UseInputActivity;
+        config.Idle.IncludeGamepadInput = IncludeGamepadInput;
         config.Idle.InputIdleThresholdSeconds = InputIdleSeconds;
         config.Idle.UseCpuActivity = UseCpuActivity;
         config.Idle.CpuUsagePercentageThreshold = CpuUsageThreshold;
@@ -672,6 +695,7 @@ public class SettingsViewModel : ViewModelBase
         config.PowerAction = PowerAction;
         config.ShowConfirmationDialog = ShowConfirmationDialog;
         config.ConfirmationCountdownSeconds = Math.Max(1, ConfirmationCountdownSeconds);
+        config.EnableSleepLogging = EnableSleepLogging;
         config.SleepCooldownSeconds = Math.Max(10, SleepCooldownSeconds);
 
         // Schedule mode

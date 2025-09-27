@@ -9,6 +9,7 @@ public class AppConfig
     public PowerAction PowerAction { get; set; } = PowerAction.Sleep;
     public bool ShowConfirmationDialog { get; set; } = false;
     public int ConfirmationCountdownSeconds { get; set; } = 10;
+    public bool EnableSleepLogging { get; set; } = true;
     public bool StartWithWindows { get; set; }
     public int PollingIntervalSeconds { get; set; } = 1;
     public int SleepCooldownSeconds { get; set; } = 45;
@@ -20,6 +21,7 @@ public class AppConfig
         PowerAction = PowerAction.Sleep,
         ShowConfirmationDialog = false,
         ConfirmationCountdownSeconds = 10,
+        EnableSleepLogging = true,
         StartWithWindows = false,
         PollingIntervalSeconds = 1,
         SleepCooldownSeconds = 45
@@ -32,6 +34,7 @@ public class AppConfig
         PowerAction = PowerAction,
         ShowConfirmationDialog = ShowConfirmationDialog,
         ConfirmationCountdownSeconds = ConfirmationCountdownSeconds,
+        EnableSleepLogging = EnableSleepLogging,
         StartWithWindows = StartWithWindows,
         PollingIntervalSeconds = PollingIntervalSeconds,
         SleepCooldownSeconds = SleepCooldownSeconds

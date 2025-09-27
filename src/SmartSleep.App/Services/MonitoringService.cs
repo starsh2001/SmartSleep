@@ -9,6 +9,7 @@ namespace SmartSleep.App.Services;
 public class MonitoringService : IDisposable
 {
     private readonly SleepService _sleepService;
+    private readonly SleepLogService _logService = new();
     private readonly CpuUsageSampler _cpuSampler = new();
     private readonly NetworkUsageSampler _networkSampler = new();
     private readonly object _configLock = new();
@@ -30,6 +31,7 @@ public class MonitoringService : IDisposable
     public MonitoringService(SleepService sleepService)
     {
         _sleepService = sleepService;
+        InputActivityReader.GamepadConnectionChanged += OnGamepadConnectionChanged;
     }
 
     public void UpdateConfiguration(AppConfig config)
@@ -122,7 +124,7 @@ public class MonitoringService : IDisposable
 
             var scheduleActive = snapshotConfig.Schedule.IsWithinWindow(nowLocal);
 
-            var rawInputIdle = InputActivityReader.GetIdleTime();
+            var rawInputIdle = InputActivityReader.GetIdleTime(snapshotConfig.Idle.IncludeGamepadInput);
             var rawBaselineUtc = nowUtc - rawInputIdle;
             var inputActivityDetected = rawBaselineUtc > _inputIdleBaselineUtc;
             if (inputActivityDetected)
@@ -516,6 +518,24 @@ public class MonitoringService : IDisposable
             currentConfig.ConfirmationCountdownSeconds,
             out var errorCode);
 
+        // Log the sleep action if logging is enabled
+        if (currentConfig.EnableSleepLogging)
+        {
+            if (success)
+            {
+                _logService.LogSleepAction(currentConfig.PowerAction, true);
+            }
+            else if (currentConfig.ShowConfirmationDialog && errorCode == 0)
+            {
+                // Don't log cancelled actions - they're not actual sleep attempts
+            }
+            else
+            {
+                var errorMessage = $"오류 코드: {errorCode}";
+                _logService.LogSleepAction(currentConfig.PowerAction, false, errorMessage);
+            }
+        }
+
         if (success)
         {
             _lastSleepSuccessUtc = attemptUtc;
@@ -541,10 +561,21 @@ public class MonitoringService : IDisposable
         }
     }
 
+    private void OnGamepadConnectionChanged(object? sender, GamepadConnectionEventArgs e)
+    {
+        var message = e.IsConnected
+            ? $"{e.DeviceName} 연결됨 (총 {e.TotalConnectedCount}개)"
+            : $"{e.DeviceName} 해제됨 (총 {e.TotalConnectedCount}개)";
+
+        SleepTriggered?.Invoke(this, $"게임패드: {message}");
+    }
+
     public void Dispose()
     {
+        InputActivityReader.GamepadConnectionChanged -= OnGamepadConnectionChanged;
         _cts?.Cancel();
         _cts?.Dispose();
+        InputActivityReader.Cleanup();
     }
 
     private void ApplySleepCooldownFromConfig()

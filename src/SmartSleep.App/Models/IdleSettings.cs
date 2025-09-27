@@ -5,6 +5,7 @@ namespace SmartSleep.App.Models;
 public class IdleSettings
 {
     public bool UseInputActivity { get; set; } = true;
+    public bool IncludeGamepadInput { get; set; } = true;
     public int InputIdleThresholdSeconds { get; set; } = 1200;
     public bool UseCpuActivity { get; set; } = true;
     public double CpuUsagePercentageThreshold { get; set; } = 10.0;
@@ -24,6 +25,7 @@ public class IdleSettings
     public IdleSettings Clone() => new()
     {
         UseInputActivity = UseInputActivity,
+        IncludeGamepadInput = IncludeGamepadInput,
         InputIdleThresholdSeconds = InputIdleThresholdSeconds,
         UseCpuActivity = UseCpuActivity,
         CpuUsagePercentageThreshold = CpuUsagePercentageThreshold,
