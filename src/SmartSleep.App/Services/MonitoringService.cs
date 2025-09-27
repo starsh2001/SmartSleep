@@ -510,7 +510,13 @@ public class MonitoringService : IDisposable
             _ => "전원"
         };
 
-        if (_sleepService.TryExecutePowerAction(currentConfig.PowerAction, out var errorCode))
+        var success = _sleepService.TryExecutePowerActionWithConfirmation(
+            currentConfig.PowerAction,
+            currentConfig.ShowConfirmationDialog,
+            currentConfig.ConfirmationCountdownSeconds,
+            out var errorCode);
+
+        if (success)
         {
             _lastSleepSuccessUtc = attemptUtc;
             var lastSuccessText = previousSuccess.HasValue
@@ -523,7 +529,15 @@ public class MonitoringService : IDisposable
             var lastSuccessText = _lastSleepSuccessUtc.HasValue
                 ? _lastSleepSuccessUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
                 : "기록 없음";
-            SleepTriggered?.Invoke(this, $"{actionText} 실행 실패 (오류 코드: {errorCode}, 마지막 성공: {lastSuccessText})");
+
+            if (currentConfig.ShowConfirmationDialog && errorCode == 0)
+            {
+                SleepTriggered?.Invoke(this, $"{actionText} 실행 취소됨 (마지막 성공: {lastSuccessText})");
+            }
+            else
+            {
+                SleepTriggered?.Invoke(this, $"{actionText} 실행 실패 (오류 코드: {errorCode}, 마지막 성공: {lastSuccessText})");
+            }
         }
     }
 

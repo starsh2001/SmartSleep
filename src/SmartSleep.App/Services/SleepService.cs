@@ -1,6 +1,9 @@
 using System.Runtime.InteropServices;
+using System.Windows;
 using SmartSleep.App.Interop;
 using SmartSleep.App.Models;
+using SmartSleep.App.ViewModels;
+using SmartSleep.App.Views;
 
 namespace SmartSleep.App.Services;
 
@@ -14,6 +17,26 @@ public class SleepService
             PowerAction.Shutdown => TryShutdown(out errorCode),
             _ => throw new ArgumentOutOfRangeException(nameof(action))
         };
+    }
+
+    public bool TryExecutePowerActionWithConfirmation(PowerAction action, bool showConfirmation, int countdownSeconds, out int errorCode)
+    {
+        if (showConfirmation)
+        {
+            var viewModel = new ConfirmationDialogViewModel(action, countdownSeconds);
+            var dialog = new ConfirmationDialog(viewModel);
+
+            var result = dialog.ShowDialog();
+            viewModel.StopCountdown();
+
+            if (result != true)
+            {
+                errorCode = 0;
+                return false;
+            }
+        }
+
+        return TryExecutePowerAction(action, out errorCode);
     }
 
     public bool TryEnterSleep(out int errorCode)

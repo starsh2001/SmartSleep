@@ -10,7 +10,8 @@
       "Bash(tasklist)",
       "Bash(findstr:*)",
       "Bash(tasklist:*)",
-      "Bash(dotnet run:*)"
+      "Bash(dotnet run:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

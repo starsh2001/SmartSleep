@@ -221,6 +221,12 @@
                             <ComboBoxItem Content="시스템 종료" Tag="{x:Static models:PowerAction.Shutdown}"/>
                         </ComboBox>
                     </StackPanel>
+
+                    <CheckBox Content="실행 전 확인 다이얼로그 표시" IsChecked="{Binding ShowConfirmationDialog}" Margin="0,8,0,0"/>
+                    <StackPanel Orientation="Horizontal" Margin="24,4,0,0" IsEnabled="{Binding ShowConfirmationDialog}">
+                        <TextBlock Text="확인 대기 시간 (초):" VerticalAlignment="Center"/>
+                        <TextBox Width="80" Margin="8,0,0,0" Text="{Binding ConfirmationCountdownSeconds, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
                 </StackPanel>
 
                 <TextBlock Text="기타" FontWeight="Bold" FontSize="14"/>

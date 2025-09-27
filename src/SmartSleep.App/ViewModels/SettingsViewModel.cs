@@ -63,6 +63,8 @@ public class SettingsViewModel : ViewModelBase
     private string _sundayEndText = "00:00";
     private bool _startWithWindows;
     private PowerAction _powerAction = PowerAction.Sleep;
+    private bool _showConfirmationDialog = false;
+    private int _confirmationCountdownSeconds = 10;
     private int _sleepCooldownSeconds = 45;
     private string _statusMessage = string.Empty;
 
@@ -430,6 +432,17 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _powerAction, value);
     }
 
+    public bool ShowConfirmationDialog
+    {
+        get => _showConfirmationDialog;
+        set => SetProperty(ref _showConfirmationDialog, value);
+    }
+
+    public int ConfirmationCountdownSeconds
+    {
+        get => _confirmationCountdownSeconds;
+        set => SetProperty(ref _confirmationCountdownSeconds, value);
+    }
 
     public int SleepCooldownSeconds
     {
@@ -537,6 +550,8 @@ public class SettingsViewModel : ViewModelBase
             SundayEndText = config.Schedule.Sunday.EndTime.ToString("hh\\:mm"),
             StartWithWindows = config.StartWithWindows,
             PowerAction = config.PowerAction,
+            ShowConfirmationDialog = config.ShowConfirmationDialog,
+            ConfirmationCountdownSeconds = config.ConfirmationCountdownSeconds,
             SleepCooldownSeconds = cooldown
         };
     }
@@ -655,6 +670,8 @@ public class SettingsViewModel : ViewModelBase
         config.PollingIntervalSeconds = PollingIntervalSeconds;
         config.StartWithWindows = StartWithWindows;
         config.PowerAction = PowerAction;
+        config.ShowConfirmationDialog = ShowConfirmationDialog;
+        config.ConfirmationCountdownSeconds = Math.Max(1, ConfirmationCountdownSeconds);
         config.SleepCooldownSeconds = Math.Max(10, SleepCooldownSeconds);
 
         // Schedule mode
