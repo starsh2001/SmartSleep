@@ -2,6 +2,7 @@
 using SmartSleep.App.Models;
 using SmartSleep.App.Utilities;
 using System.Windows.Media;
+using System.Windows;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 
@@ -20,9 +21,46 @@ public class SettingsViewModel : ViewModelBase
     private int _networkIdleDurationSeconds = 600;
     private int _networkSmoothingWindow = 5;
     private int _pollingIntervalSeconds;
-    private bool _scheduleEnabled;
-    private string _scheduleStartText = "00:00";
-    private string _scheduleEndText = "00:00";
+    // Schedule mode
+    private ScheduleMode _scheduleMode = ScheduleMode.Always;
+    private string _dailyStartText = "00:00";
+    private string _dailyEndText = "00:00";
+
+    // Weekly schedule properties
+    private bool _mondayEnabled;
+    private bool _mondayAllDay;
+    private string _mondayStartText = "00:00";
+    private string _mondayEndText = "00:00";
+
+    private bool _tuesdayEnabled;
+    private bool _tuesdayAllDay;
+    private string _tuesdayStartText = "00:00";
+    private string _tuesdayEndText = "00:00";
+
+    private bool _wednesdayEnabled;
+    private bool _wednesdayAllDay;
+    private string _wednesdayStartText = "00:00";
+    private string _wednesdayEndText = "00:00";
+
+    private bool _thursdayEnabled;
+    private bool _thursdayAllDay;
+    private string _thursdayStartText = "00:00";
+    private string _thursdayEndText = "00:00";
+
+    private bool _fridayEnabled;
+    private bool _fridayAllDay;
+    private string _fridayStartText = "00:00";
+    private string _fridayEndText = "00:00";
+
+    private bool _saturdayEnabled;
+    private bool _saturdayAllDay;
+    private string _saturdayStartText = "00:00";
+    private string _saturdayEndText = "00:00";
+
+    private bool _sundayEnabled;
+    private bool _sundayAllDay;
+    private string _sundayStartText = "00:00";
+    private string _sundayEndText = "00:00";
     private bool _startWithWindows;
     private int _sleepCooldownSeconds = 45;
     private string _statusMessage = string.Empty;
@@ -161,23 +199,223 @@ public class SettingsViewModel : ViewModelBase
         set => SetProperty(ref _pollingIntervalSeconds, value);
     }
 
-    public bool ScheduleEnabled
+    // Monday properties
+    public bool MondayEnabled
     {
-        get => _scheduleEnabled;
-        set => SetProperty(ref _scheduleEnabled, value);
+        get => _mondayEnabled;
+        set => SetProperty(ref _mondayEnabled, value);
     }
 
-    public string ScheduleStartText
+    public bool MondayAllDay
     {
-        get => _scheduleStartText;
-        set => SetProperty(ref _scheduleStartText, value);
+        get => _mondayAllDay;
+        set => SetProperty(ref _mondayAllDay, value);
     }
 
-    public string ScheduleEndText
+    public string MondayStartText
     {
-        get => _scheduleEndText;
-        set => SetProperty(ref _scheduleEndText, value);
+        get => _mondayStartText;
+        set => SetProperty(ref _mondayStartText, value);
     }
+
+    public string MondayEndText
+    {
+        get => _mondayEndText;
+        set => SetProperty(ref _mondayEndText, value);
+    }
+
+    public bool MondayTimeEnabled => MondayEnabled && !MondayAllDay;
+
+    // Tuesday properties
+    public bool TuesdayEnabled
+    {
+        get => _tuesdayEnabled;
+        set => SetProperty(ref _tuesdayEnabled, value);
+    }
+
+    public bool TuesdayAllDay
+    {
+        get => _tuesdayAllDay;
+        set => SetProperty(ref _tuesdayAllDay, value);
+    }
+
+    public string TuesdayStartText
+    {
+        get => _tuesdayStartText;
+        set => SetProperty(ref _tuesdayStartText, value);
+    }
+
+    public string TuesdayEndText
+    {
+        get => _tuesdayEndText;
+        set => SetProperty(ref _tuesdayEndText, value);
+    }
+
+    public bool TuesdayTimeEnabled => TuesdayEnabled && !TuesdayAllDay;
+
+    // Wednesday properties
+    public bool WednesdayEnabled
+    {
+        get => _wednesdayEnabled;
+        set => SetProperty(ref _wednesdayEnabled, value);
+    }
+
+    public bool WednesdayAllDay
+    {
+        get => _wednesdayAllDay;
+        set => SetProperty(ref _wednesdayAllDay, value);
+    }
+
+    public string WednesdayStartText
+    {
+        get => _wednesdayStartText;
+        set => SetProperty(ref _wednesdayStartText, value);
+    }
+
+    public string WednesdayEndText
+    {
+        get => _wednesdayEndText;
+        set => SetProperty(ref _wednesdayEndText, value);
+    }
+
+    public bool WednesdayTimeEnabled => WednesdayEnabled && !WednesdayAllDay;
+
+    // Thursday properties
+    public bool ThursdayEnabled
+    {
+        get => _thursdayEnabled;
+        set => SetProperty(ref _thursdayEnabled, value);
+    }
+
+    public bool ThursdayAllDay
+    {
+        get => _thursdayAllDay;
+        set => SetProperty(ref _thursdayAllDay, value);
+    }
+
+    public string ThursdayStartText
+    {
+        get => _thursdayStartText;
+        set => SetProperty(ref _thursdayStartText, value);
+    }
+
+    public string ThursdayEndText
+    {
+        get => _thursdayEndText;
+        set => SetProperty(ref _thursdayEndText, value);
+    }
+
+    public bool ThursdayTimeEnabled => ThursdayEnabled && !ThursdayAllDay;
+
+    // Friday properties
+    public bool FridayEnabled
+    {
+        get => _fridayEnabled;
+        set => SetProperty(ref _fridayEnabled, value);
+    }
+
+    public bool FridayAllDay
+    {
+        get => _fridayAllDay;
+        set => SetProperty(ref _fridayAllDay, value);
+    }
+
+    public string FridayStartText
+    {
+        get => _fridayStartText;
+        set => SetProperty(ref _fridayStartText, value);
+    }
+
+    public string FridayEndText
+    {
+        get => _fridayEndText;
+        set => SetProperty(ref _fridayEndText, value);
+    }
+
+    public bool FridayTimeEnabled => FridayEnabled && !FridayAllDay;
+
+    // Saturday properties
+    public bool SaturdayEnabled
+    {
+        get => _saturdayEnabled;
+        set => SetProperty(ref _saturdayEnabled, value);
+    }
+
+    public bool SaturdayAllDay
+    {
+        get => _saturdayAllDay;
+        set => SetProperty(ref _saturdayAllDay, value);
+    }
+
+    public string SaturdayStartText
+    {
+        get => _saturdayStartText;
+        set => SetProperty(ref _saturdayStartText, value);
+    }
+
+    public string SaturdayEndText
+    {
+        get => _saturdayEndText;
+        set => SetProperty(ref _saturdayEndText, value);
+    }
+
+    public bool SaturdayTimeEnabled => SaturdayEnabled && !SaturdayAllDay;
+
+    // Sunday properties
+    public bool SundayEnabled
+    {
+        get => _sundayEnabled;
+        set => SetProperty(ref _sundayEnabled, value);
+    }
+
+    public bool SundayAllDay
+    {
+        get => _sundayAllDay;
+        set => SetProperty(ref _sundayAllDay, value);
+    }
+
+    public string SundayStartText
+    {
+        get => _sundayStartText;
+        set => SetProperty(ref _sundayStartText, value);
+    }
+
+    public string SundayEndText
+    {
+        get => _sundayEndText;
+        set => SetProperty(ref _sundayEndText, value);
+    }
+
+    public bool SundayTimeEnabled => SundayEnabled && !SundayAllDay;
+
+    // Schedule mode properties
+    public ScheduleMode ScheduleMode
+    {
+        get => _scheduleMode;
+        set
+        {
+            if (SetProperty(ref _scheduleMode, value))
+            {
+                OnPropertyChanged(nameof(DailyModeVisible));
+                OnPropertyChanged(nameof(WeeklyModeVisible));
+            }
+        }
+    }
+
+    public string DailyStartText
+    {
+        get => _dailyStartText;
+        set => SetProperty(ref _dailyStartText, value);
+    }
+
+    public string DailyEndText
+    {
+        get => _dailyEndText;
+        set => SetProperty(ref _dailyEndText, value);
+    }
+
+    public Visibility DailyModeVisible => ScheduleMode == ScheduleMode.Daily ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility WeeklyModeVisible => ScheduleMode == ScheduleMode.Weekly ? Visibility.Visible : Visibility.Collapsed;
 
     public bool StartWithWindows
     {
@@ -251,9 +489,45 @@ public class SettingsViewModel : ViewModelBase
             NetworkIdleDurationSeconds = config.Idle.NetworkIdleDurationSeconds,
             NetworkSmoothingWindow = config.Idle.NetworkSmoothingWindow,
             PollingIntervalSeconds = config.PollingIntervalSeconds,
-            ScheduleEnabled = config.Schedule.Enabled,
-            ScheduleStartText = config.Schedule.StartTime.ToString("hh\\:mm"),
-            ScheduleEndText = config.Schedule.EndTime.ToString("hh\\:mm"),
+            // Schedule mode
+            ScheduleMode = config.Schedule.Mode,
+            DailyStartText = config.Schedule.DailyStartTime.ToString("hh\\:mm"),
+            DailyEndText = config.Schedule.DailyEndTime.ToString("hh\\:mm"),
+            // Weekly schedule
+            MondayEnabled = config.Schedule.Monday.Enabled,
+            MondayAllDay = config.Schedule.Monday.AllDay,
+            MondayStartText = config.Schedule.Monday.StartTime.ToString("hh\\:mm"),
+            MondayEndText = config.Schedule.Monday.EndTime.ToString("hh\\:mm"),
+
+            TuesdayEnabled = config.Schedule.Tuesday.Enabled,
+            TuesdayAllDay = config.Schedule.Tuesday.AllDay,
+            TuesdayStartText = config.Schedule.Tuesday.StartTime.ToString("hh\\:mm"),
+            TuesdayEndText = config.Schedule.Tuesday.EndTime.ToString("hh\\:mm"),
+
+            WednesdayEnabled = config.Schedule.Wednesday.Enabled,
+            WednesdayAllDay = config.Schedule.Wednesday.AllDay,
+            WednesdayStartText = config.Schedule.Wednesday.StartTime.ToString("hh\\:mm"),
+            WednesdayEndText = config.Schedule.Wednesday.EndTime.ToString("hh\\:mm"),
+
+            ThursdayEnabled = config.Schedule.Thursday.Enabled,
+            ThursdayAllDay = config.Schedule.Thursday.AllDay,
+            ThursdayStartText = config.Schedule.Thursday.StartTime.ToString("hh\\:mm"),
+            ThursdayEndText = config.Schedule.Thursday.EndTime.ToString("hh\\:mm"),
+
+            FridayEnabled = config.Schedule.Friday.Enabled,
+            FridayAllDay = config.Schedule.Friday.AllDay,
+            FridayStartText = config.Schedule.Friday.StartTime.ToString("hh\\:mm"),
+            FridayEndText = config.Schedule.Friday.EndTime.ToString("hh\\:mm"),
+
+            SaturdayEnabled = config.Schedule.Saturday.Enabled,
+            SaturdayAllDay = config.Schedule.Saturday.AllDay,
+            SaturdayStartText = config.Schedule.Saturday.StartTime.ToString("hh\\:mm"),
+            SaturdayEndText = config.Schedule.Saturday.EndTime.ToString("hh\\:mm"),
+
+            SundayEnabled = config.Schedule.Sunday.Enabled,
+            SundayAllDay = config.Schedule.Sunday.AllDay,
+            SundayStartText = config.Schedule.Sunday.StartTime.ToString("hh\\:mm"),
+            SundayEndText = config.Schedule.Sunday.EndTime.ToString("hh\\:mm"),
             StartWithWindows = config.StartWithWindows,
             SleepCooldownSeconds = cooldown
         };
@@ -315,10 +589,36 @@ public class SettingsViewModel : ViewModelBase
             return false;
         }
 
-        if (!TimeSpan.TryParse(ScheduleStartText, out _) || !TimeSpan.TryParse(ScheduleEndText, out _))
+        // Validate schedule time formats based on mode
+        if (ScheduleMode == ScheduleMode.Daily)
         {
-            validationError = "감시 시간대는 HH:mm 형식으로 입력해야 합니다.";
-            return false;
+            if (!TimeSpan.TryParse(DailyStartText, out _) || !TimeSpan.TryParse(DailyEndText, out _))
+            {
+                validationError = "매일 감시 시간대는 HH:mm 형식으로 입력해야 합니다.";
+                return false;
+            }
+        }
+        else if (ScheduleMode == ScheduleMode.Weekly)
+        {
+            var timeTexts = new[]
+            {
+                (MondayEnabled && !MondayAllDay, MondayStartText, MondayEndText, "월요일"),
+                (TuesdayEnabled && !TuesdayAllDay, TuesdayStartText, TuesdayEndText, "화요일"),
+                (WednesdayEnabled && !WednesdayAllDay, WednesdayStartText, WednesdayEndText, "수요일"),
+                (ThursdayEnabled && !ThursdayAllDay, ThursdayStartText, ThursdayEndText, "목요일"),
+                (FridayEnabled && !FridayAllDay, FridayStartText, FridayEndText, "금요일"),
+                (SaturdayEnabled && !SaturdayAllDay, SaturdayStartText, SaturdayEndText, "토요일"),
+                (SundayEnabled && !SundayAllDay, SundayStartText, SundayEndText, "일요일")
+            };
+
+            foreach (var (enabled, startText, endText, dayName) in timeTexts)
+            {
+                if (enabled && (!TimeSpan.TryParse(startText, out _) || !TimeSpan.TryParse(endText, out _)))
+                {
+                    validationError = $"{dayName} 감시 시간대는 HH:mm 형식으로 입력해야 합니다.";
+                    return false;
+                }
+            }
         }
 
         if (PollingIntervalSeconds <= 0)
@@ -348,17 +648,100 @@ public class SettingsViewModel : ViewModelBase
         config.StartWithWindows = StartWithWindows;
         config.SleepCooldownSeconds = Math.Max(10, SleepCooldownSeconds);
 
-        if (TimeSpan.TryParse(ScheduleStartText, out var start))
+        // Schedule mode
+        config.Schedule.Mode = ScheduleMode;
+        if (TimeSpan.TryParse(DailyStartText, out var dailyStart))
         {
-            config.Schedule.StartTime = start;
+            config.Schedule.DailyStartTime = dailyStart;
+        }
+        if (TimeSpan.TryParse(DailyEndText, out var dailyEnd))
+        {
+            config.Schedule.DailyEndTime = dailyEnd;
         }
 
-        if (TimeSpan.TryParse(ScheduleEndText, out var end))
+        // Monday
+        config.Schedule.Monday.Enabled = MondayEnabled;
+        config.Schedule.Monday.AllDay = MondayAllDay;
+        if (TimeSpan.TryParse(MondayStartText, out var mondayStart))
         {
-            config.Schedule.EndTime = end;
+            config.Schedule.Monday.StartTime = mondayStart;
+        }
+        if (TimeSpan.TryParse(MondayEndText, out var mondayEnd))
+        {
+            config.Schedule.Monday.EndTime = mondayEnd;
         }
 
-        config.Schedule.Enabled = ScheduleEnabled;
+        // Tuesday
+        config.Schedule.Tuesday.Enabled = TuesdayEnabled;
+        config.Schedule.Tuesday.AllDay = TuesdayAllDay;
+        if (TimeSpan.TryParse(TuesdayStartText, out var tuesdayStart))
+        {
+            config.Schedule.Tuesday.StartTime = tuesdayStart;
+        }
+        if (TimeSpan.TryParse(TuesdayEndText, out var tuesdayEnd))
+        {
+            config.Schedule.Tuesday.EndTime = tuesdayEnd;
+        }
+
+        // Wednesday
+        config.Schedule.Wednesday.Enabled = WednesdayEnabled;
+        config.Schedule.Wednesday.AllDay = WednesdayAllDay;
+        if (TimeSpan.TryParse(WednesdayStartText, out var wednesdayStart))
+        {
+            config.Schedule.Wednesday.StartTime = wednesdayStart;
+        }
+        if (TimeSpan.TryParse(WednesdayEndText, out var wednesdayEnd))
+        {
+            config.Schedule.Wednesday.EndTime = wednesdayEnd;
+        }
+
+        // Thursday
+        config.Schedule.Thursday.Enabled = ThursdayEnabled;
+        config.Schedule.Thursday.AllDay = ThursdayAllDay;
+        if (TimeSpan.TryParse(ThursdayStartText, out var thursdayStart))
+        {
+            config.Schedule.Thursday.StartTime = thursdayStart;
+        }
+        if (TimeSpan.TryParse(ThursdayEndText, out var thursdayEnd))
+        {
+            config.Schedule.Thursday.EndTime = thursdayEnd;
+        }
+
+        // Friday
+        config.Schedule.Friday.Enabled = FridayEnabled;
+        config.Schedule.Friday.AllDay = FridayAllDay;
+        if (TimeSpan.TryParse(FridayStartText, out var fridayStart))
+        {
+            config.Schedule.Friday.StartTime = fridayStart;
+        }
+        if (TimeSpan.TryParse(FridayEndText, out var fridayEnd))
+        {
+            config.Schedule.Friday.EndTime = fridayEnd;
+        }
+
+        // Saturday
+        config.Schedule.Saturday.Enabled = SaturdayEnabled;
+        config.Schedule.Saturday.AllDay = SaturdayAllDay;
+        if (TimeSpan.TryParse(SaturdayStartText, out var saturdayStart))
+        {
+            config.Schedule.Saturday.StartTime = saturdayStart;
+        }
+        if (TimeSpan.TryParse(SaturdayEndText, out var saturdayEnd))
+        {
+            config.Schedule.Saturday.EndTime = saturdayEnd;
+        }
+
+        // Sunday
+        config.Schedule.Sunday.Enabled = SundayEnabled;
+        config.Schedule.Sunday.AllDay = SundayAllDay;
+        if (TimeSpan.TryParse(SundayStartText, out var sundayStart))
+        {
+            config.Schedule.Sunday.StartTime = sundayStart;
+        }
+        if (TimeSpan.TryParse(SundayEndText, out var sundayEnd))
+        {
+            config.Schedule.Sunday.EndTime = sundayEnd;
+        }
         return config;
     }
 

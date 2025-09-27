@@ -363,7 +363,7 @@ public class MonitoringService : IDisposable
         var nowLocal = nowUtc.ToLocalTime();
         var scheduleRemaining = GetScheduleRemainingSeconds(config.Schedule, nowLocal);
 
-        if (!scheduleActive && config.Schedule.Enabled)
+        if (!scheduleActive && HasAnyActiveSchedule(config.Schedule))
         {
             return $"감시 시작까지 {Math.Ceiling(scheduleRemaining)}초";
         }
@@ -424,36 +424,63 @@ public class MonitoringService : IDisposable
         return remaining > 0 ? remaining : 0;
     }
 
+    private static bool HasAnyActiveSchedule(ScheduleSettings schedule)
+    {
+        return schedule.Monday.Enabled || schedule.Tuesday.Enabled || schedule.Wednesday.Enabled ||
+               schedule.Thursday.Enabled || schedule.Friday.Enabled || schedule.Saturday.Enabled ||
+               schedule.Sunday.Enabled;
+    }
+
     private static double GetScheduleRemainingSeconds(ScheduleSettings schedule, DateTime nowLocal)
     {
-        if (!schedule.Enabled)
-        {
-            return 0;
-        }
-
         if (schedule.IsWithinWindow(nowLocal))
         {
             return 0;
         }
 
-        var todayStart = nowLocal.Date + schedule.StartTime;
-
-        if (schedule.StartTime <= schedule.EndTime)
+        // Find next active schedule window
+        var currentDay = nowLocal;
+        for (int i = 0; i < 7; i++)
         {
-            if (nowLocal < todayStart)
+            var daySchedule = GetDaySchedule(schedule, currentDay.DayOfWeek);
+            if (daySchedule.Enabled)
             {
-                return (todayStart - nowLocal).TotalSeconds;
+                if (i == 0) // today
+                {
+                    if (!daySchedule.AllDay)
+                    {
+                        var todayStart = currentDay.Date + daySchedule.StartTime;
+                        if (nowLocal < todayStart)
+                        {
+                            return (todayStart - nowLocal).TotalSeconds;
+                        }
+                    }
+                }
+                else // future day
+                {
+                    var futureDate = currentDay.Date + (daySchedule.AllDay ? TimeSpan.Zero : daySchedule.StartTime);
+                    return (futureDate - nowLocal).TotalSeconds;
+                }
             }
-
-            return (todayStart.AddDays(1) - nowLocal).TotalSeconds;
+            currentDay = currentDay.AddDays(1);
         }
 
-        if (nowLocal < todayStart)
+        return 0; // No active schedule found
+    }
+
+    private static DaySchedule GetDaySchedule(ScheduleSettings schedule, DayOfWeek dayOfWeek)
+    {
+        return dayOfWeek switch
         {
-            return (todayStart - nowLocal).TotalSeconds;
-        }
-
-        return (todayStart.AddDays(1) - nowLocal).TotalSeconds;
+            DayOfWeek.Monday => schedule.Monday,
+            DayOfWeek.Tuesday => schedule.Tuesday,
+            DayOfWeek.Wednesday => schedule.Wednesday,
+            DayOfWeek.Thursday => schedule.Thursday,
+            DayOfWeek.Friday => schedule.Friday,
+            DayOfWeek.Saturday => schedule.Saturday,
+            DayOfWeek.Sunday => schedule.Sunday,
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 
     private bool CanAttemptSleep(DateTime nowUtc) => GetCooldownRemainingSeconds(nowUtc) <= 0;
