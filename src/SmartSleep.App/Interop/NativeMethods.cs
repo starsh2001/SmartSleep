@@ -109,4 +109,74 @@ internal static class NativeMethods
 
     // HID Class GUID for game controllers
     internal static readonly Guid GUID_DEVINTERFACE_HID = new Guid("4D1E55B2-F16F-11CF-88CB-001111000030");
+
+    // XInput API for gamepad detection
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct XINPUT_STATE
+    {
+        public uint dwPacketNumber;
+        public XINPUT_GAMEPAD Gamepad;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct XINPUT_GAMEPAD
+    {
+        public ushort wButtons;
+        public byte bLeftTrigger;
+        public byte bRightTrigger;
+        public short sThumbLX;
+        public short sThumbLY;
+        public short sThumbRX;
+        public short sThumbRY;
+    }
+
+    [DllImport("xinput1_4.dll", EntryPoint = "XInputGetState")]
+    internal static extern uint XInputGetState(uint dwUserIndex, out XINPUT_STATE pState);
+
+    // Raw Input API for device enumeration
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct RAWINPUTDEVICELIST
+    {
+        public IntPtr hDevice;
+        public uint dwType;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct RID_DEVICE_INFO
+    {
+        public uint cbSize;
+        public uint dwType;
+        public RID_DEVICE_INFO_HID hid;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct RID_DEVICE_INFO_HID
+    {
+        public uint dwVendorId;
+        public uint dwProductId;
+        public uint dwVersionNumber;
+        public ushort usUsagePage;
+        public ushort usUsage;
+    }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern uint GetRawInputDeviceList(
+        [Out] RAWINPUTDEVICELIST[]? pRawInputDeviceList,
+        ref uint puiNumDevices,
+        uint cbSize);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern uint GetRawInputDeviceList(
+        IntPtr pRawInputDeviceList,
+        ref uint puiNumDevices,
+        uint cbSize);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    internal static extern uint GetRawInputDeviceInfo(
+        IntPtr hDevice,
+        uint uiCommand,
+        IntPtr pData,
+        ref uint pcbSize);
+
+    internal const uint RIDI_DEVICEINFO = 0x2000000b;
 }

@@ -60,17 +60,38 @@ public static class LocalizationManager
         _currentDictionary = dictionary;
         _currentLanguage = language;
         SetCulture(language);
+
+        // Clear string cache when language changes
+        lock (_cacheLock)
+        {
+            _stringCache.Clear();
+        }
+
         _initialized = true;
         LanguageChanged?.Invoke(null, EventArgs.Empty);
     }
 
+    private static readonly Dictionary<string, string> _stringCache = new();
+    private static readonly object _cacheLock = new();
+
     public static string GetString(string key)
     {
-        if (WpfApplication.Current?.Resources.Contains(key) == true)
+        lock (_cacheLock)
         {
-            return WpfApplication.Current.Resources[key]?.ToString() ?? key;
+            if (_stringCache.TryGetValue(key, out var cachedValue))
+            {
+                return cachedValue;
+            }
+
+            string value = key; // fallback
+            if (WpfApplication.Current?.Resources.Contains(key) == true)
+            {
+                value = WpfApplication.Current.Resources[key]?.ToString() ?? key;
+            }
+
+            _stringCache[key] = value;
+            return value;
         }
-        return key;
     }
 
     public static string Format(string key, params object[] args)

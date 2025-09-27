@@ -8,6 +8,9 @@ public static class InputActivityReader
 {
     private static GamepadActivityReader? _gamepadReader;
     private static readonly object _lock = new();
+    private static bool _gamepadInitialized = false;
+    private static TimeSpan _cachedGamepadIdleTime = TimeSpan.MaxValue;
+    private static Task? _gamepadInitializationTask;
 
     public static event EventHandler<GamepadConnectionEventArgs>? GamepadConnectionChanged;
 
@@ -53,74 +56,125 @@ public static class InputActivityReader
 
     private static TimeSpan GetGamepadIdleTime()
     {
-        lock (_lock)
+        // Start background initialization if not already started
+        if (_gamepadInitializationTask == null)
         {
-            if (_gamepadReader == null)
+            lock (_lock)
             {
-                _gamepadReader = new GamepadActivityReader();
-                _gamepadReader.GamepadConnectionChanged += OnGamepadConnectionChanged;
-
-                // Try initialization with retry logic
-                if (!TryInitializeGamepadReader())
+                if (_gamepadInitializationTask == null)
                 {
-                    return TimeSpan.MaxValue;
+                    _gamepadInitializationTask = Task.Run(InitializeGamepadInBackground);
                 }
             }
+        }
 
-            return _gamepadReader.GetGamepadIdleTime();
+        // Return cached value immediately (no blocking)
+        lock (_lock)
+        {
+            return _cachedGamepadIdleTime;
         }
     }
 
-    private static bool TryInitializeGamepadReader()
+    private static async Task InitializeGamepadInBackground()
+    {
+        try
+        {
+            await Task.Delay(100); // Small delay to avoid blocking main thread startup
+
+            var reader = new GamepadActivityReader();
+            reader.GamepadConnectionChanged += OnGamepadConnectionChanged;
+
+            // Try initialization in background
+            bool initialized = await Task.Run(() => TryInitializeGamepadReader(reader));
+
+            lock (_lock)
+            {
+                if (initialized)
+                {
+                    _gamepadReader = reader;
+                    _gamepadInitialized = true;
+
+                    // Start periodic update in background
+                    _ = Task.Run(UpdateGamepadIdleTimeLoop);
+                }
+                else
+                {
+                    reader.Dispose();
+                    // Keep _cachedGamepadIdleTime as MaxValue
+                }
+            }
+        }
+        catch
+        {
+            // Initialization failed - keep cached value as MaxValue
+        }
+    }
+
+    private static async Task UpdateGamepadIdleTimeLoop()
+    {
+        while (true)
+        {
+            try
+            {
+                await Task.Delay(100); // Update every 100ms for responsive gamepad detection
+
+                lock (_lock)
+                {
+                    if (_gamepadReader != null)
+                    {
+                        var gamepadCount = _gamepadReader.GetConnectedGamepadCount();
+                        if (gamepadCount > 0)
+                        {
+                            _cachedGamepadIdleTime = _gamepadReader.GetGamepadIdleTime();
+                        }
+                        else
+                        {
+                            _cachedGamepadIdleTime = TimeSpan.MaxValue;
+                        }
+                    }
+                    else
+                    {
+                        // Reader disposed - exit loop
+                        break;
+                    }
+                }
+            }
+            catch
+            {
+                // Continue on errors
+            }
+        }
+    }
+
+
+    private static bool TryInitializeGamepadReader(GamepadActivityReader reader)
     {
         // Try initialization up to 2 times
         for (int attempt = 0; attempt < 2; attempt++)
         {
             try
             {
-                if (_gamepadReader?.Initialize() == true)
+                if (reader.Initialize())
                 {
                     return true;
                 }
 
-                // If first attempt failed, dispose and recreate
+                // If first attempt failed, small delay before retry
                 if (attempt == 0)
                 {
-                    _gamepadReader?.Dispose();
-                    _gamepadReader = new GamepadActivityReader();
-                    _gamepadReader.GamepadConnectionChanged += OnGamepadConnectionChanged;
-                    System.Threading.Thread.Sleep(200); // Brief delay before retry
+                    System.Threading.Thread.Sleep(50);
                 }
             }
             catch
             {
-                // If exception occurred, clean up and try again
+                // If exception occurred, small delay before retry
                 if (attempt == 0)
                 {
-                    try
-                    {
-                        _gamepadReader?.Dispose();
-                    }
-                    catch
-                    {
-                        // Ignore disposal errors
-                    }
-                    _gamepadReader = new GamepadActivityReader();
-                    _gamepadReader.GamepadConnectionChanged += OnGamepadConnectionChanged;
+                    System.Threading.Thread.Sleep(50);
                 }
             }
         }
 
-        // All attempts failed, clean up
-        try
-        {
-            _gamepadReader?.Dispose();
-        }
-        catch
-        {
-            // Ignore disposal errors
-        }
-        _gamepadReader = null;
         return false;
     }
 
@@ -147,6 +201,8 @@ public static class InputActivityReader
                 _gamepadReader.Dispose();
                 _gamepadReader = null;
             }
+
+            _gamepadInitialized = false;
         }
     }
 }
