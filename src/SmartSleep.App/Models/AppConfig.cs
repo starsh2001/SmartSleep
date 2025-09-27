@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace SmartSleep.App.Models;
 
@@ -13,6 +13,7 @@ public class AppConfig
     public bool StartWithWindows { get; set; }
     public int PollingIntervalSeconds { get; set; } = 1;
     public int SleepCooldownSeconds { get; set; } = 45;
+    public AppLanguage Language { get; set; } = AppLanguage.English;
 
     public static AppConfig CreateDefault() => new()
     {
@@ -24,7 +25,8 @@ public class AppConfig
         EnableSleepLogging = true,
         StartWithWindows = false,
         PollingIntervalSeconds = 1,
-        SleepCooldownSeconds = 45
+        SleepCooldownSeconds = 45,
+        Language = AppLanguage.English
     };
 
     public AppConfig Clone() => new()
@@ -37,6 +39,7 @@ public class AppConfig
         EnableSleepLogging = EnableSleepLogging,
         StartWithWindows = StartWithWindows,
         PollingIntervalSeconds = PollingIntervalSeconds,
-        SleepCooldownSeconds = SleepCooldownSeconds
+        SleepCooldownSeconds = SleepCooldownSeconds,
+        Language = Language
     };
 }

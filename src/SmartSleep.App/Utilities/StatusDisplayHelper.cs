@@ -1,18 +1,16 @@
 using System;
 using System.Windows.Media;
-using Brush = System.Windows.Media.Brush;
-using Brushes = System.Windows.Media.Brushes;
 
 namespace SmartSleep.App.Utilities;
 
 public static class StatusDisplayHelper
 {
-    private static readonly Brush DefaultBrush = Brushes.LightGray;
-    private static readonly Brush SuccessBrush = Brushes.MediumSpringGreen;
-    private static readonly Brush WarningBrush = Brushes.Orange;
-    private static readonly Brush IdleBrush = Brushes.SlateGray;
+    private static readonly System.Windows.Media.Brush DefaultBrush = System.Windows.Media.Brushes.LightGray;
+    private static readonly System.Windows.Media.Brush SuccessBrush = System.Windows.Media.Brushes.MediumSpringGreen;
+    private static readonly System.Windows.Media.Brush WarningBrush = System.Windows.Media.Brushes.Orange;
+    private static readonly System.Windows.Media.Brush IdleBrush = System.Windows.Media.Brushes.SlateGray;
 
-    public static (string Text, Brush Brush) FormatStatus(string? statusMessage)
+    public static (string Text, System.Windows.Media.Brush Brush) FormatStatus(string? statusMessage)
     {
         if (string.IsNullOrWhiteSpace(statusMessage))
         {
@@ -21,19 +19,24 @@ public static class StatusDisplayHelper
 
         var trimmed = statusMessage.Trim();
         var brush = DetermineBrush(trimmed);
-        return ($"[Stat] {trimmed}", brush);
+        var display = LocalizationManager.Format("Status_DisplayPrefix", trimmed);
+        return (display, brush);
     }
 
-    private static Brush DetermineBrush(string message)
+    private static System.Windows.Media.Brush DetermineBrush(string message)
     {
-        if (message.Contains("예상 절전", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("절전 요청", StringComparison.OrdinalIgnoreCase))
+        var sleepKeyword = LocalizationManager.GetString("StatusKeyword_Sleep");
+        var requestKeyword = LocalizationManager.GetString("StatusKeyword_Request");
+        if (message.Contains(sleepKeyword, StringComparison.OrdinalIgnoreCase) ||
+            message.Contains(requestKeyword, StringComparison.OrdinalIgnoreCase))
         {
             return SuccessBrush;
         }
 
-        if (message.Contains("CPU 사용량", StringComparison.OrdinalIgnoreCase) ||
-            message.Contains("네트워크", StringComparison.OrdinalIgnoreCase))
+        var cpuKeyword = LocalizationManager.GetString("StatusKeyword_CPU");
+        var networkKeyword = LocalizationManager.GetString("StatusKeyword_Network");
+        if (message.Contains(cpuKeyword, StringComparison.OrdinalIgnoreCase) ||
+            message.Contains(networkKeyword, StringComparison.OrdinalIgnoreCase))
         {
             return WarningBrush;
         }

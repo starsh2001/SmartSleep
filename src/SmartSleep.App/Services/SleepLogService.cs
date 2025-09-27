@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using System.Text;
 using SmartSleep.App.Models;
@@ -28,7 +29,13 @@ public class SleepLogService
         {
             try
             {
-                var logLine = entry.ToString();
+                var statusToken = entry.WasSuccessful ? "Success" : "Failure";
+                var errorToken = entry.ErrorMessage?.Replace("|", "/", StringComparison.OrdinalIgnoreCase) ?? string.Empty;
+                var logLine = string.Join('|',
+                    entry.Timestamp.ToString("o", CultureInfo.InvariantCulture),
+                    entry.PowerAction,
+                    statusToken,
+                    errorToken);
                 File.AppendAllText(_logFilePath, logLine + Environment.NewLine, Encoding.UTF8);
             }
             catch
@@ -77,62 +84,104 @@ public class SleepLogService
 
         try
         {
-            // Expected format: "2024-01-01 12:00:00 - 절전 성공"
-            // or: "2024-01-01 12:00:00 - 시스템 종료 실패 (오류 메시지)"
-
-            if (line.Length < 19) // Minimum length for timestamp
-                return false;
-
-            var timestampPart = line[..19]; // "2024-01-01 12:00:00"
-            if (!DateTime.TryParseExact(timestampPart, "yyyy-MM-dd HH:mm:ss", null, System.Globalization.DateTimeStyles.None, out var timestamp))
-                return false;
-
-            var remainingPart = line[19..].Trim();
-            if (!remainingPart.StartsWith(" - "))
-                return false;
-
-            var actionAndStatus = remainingPart[3..]; // Remove " - "
-
-            PowerAction powerAction;
-            bool wasSuccessful;
-            string? errorMessage = null;
-
-            if (actionAndStatus.Contains("절전"))
+            var parts = line.Split('|');
+            if (parts.Length >= 4)
             {
-                powerAction = PowerAction.Sleep;
-            }
-            else if (actionAndStatus.Contains("시스템 종료"))
-            {
-                powerAction = PowerAction.Shutdown;
-            }
-            else
-            {
-                return false; // Unknown action
-            }
-
-            if (actionAndStatus.Contains("성공"))
-            {
-                wasSuccessful = true;
-            }
-            else if (actionAndStatus.Contains("실패"))
-            {
-                wasSuccessful = false;
-
-                // Extract error message if present
-                var errorStart = actionAndStatus.IndexOf('(');
-                var errorEnd = actionAndStatus.LastIndexOf(')');
-                if (errorStart >= 0 && errorEnd > errorStart)
+                // Try new pipe-delimited format first
+                if (TryParseNewFormat(parts, out entry))
                 {
-                    errorMessage = actionAndStatus.Substring(errorStart + 1, errorEnd - errorStart - 1);
+                    return true;
                 }
             }
-            else
+
+            // Fall back to trying legacy format parsing
+            return TryParseLegacyFormat(line, out entry);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool TryParseNewFormat(string[] parts, out SleepLogEntry entry)
+    {
+        entry = null!;
+
+        try
+        {
+            if (!DateTime.TryParseExact(parts[0], "o", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var timestamp))
             {
-                return false; // Unknown status
+                return false;
             }
 
-            entry = new SleepLogEntry(timestamp, powerAction, wasSuccessful, errorMessage);
+            if (!Enum.TryParse(parts[1], out PowerAction action))
+            {
+                return false;
+            }
+
+            var statusToken = parts[2];
+            bool wasSuccessful = statusToken.Equals("Success", StringComparison.OrdinalIgnoreCase);
+            if (!wasSuccessful && !statusToken.Equals("Failure", StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+
+            var errorMessage = string.IsNullOrWhiteSpace(parts[3]) ? null : parts[3];
+
+            entry = new SleepLogEntry(timestamp, action, wasSuccessful, errorMessage);
             return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool TryParseLegacyFormat(string line, out SleepLogEntry entry)
+    {
+        entry = null!;
+
+        try
+        {
+            // Try to parse legacy Korean format logs
+            // This is a best-effort attempt to maintain compatibility
+            // Legacy format was more free-form, so this is limited
+
+            // Look for common patterns like "2024-01-01 12:00:00 - 절전 성공"
+            var parts = line.Split(" - ");
+            if (parts.Length >= 2)
+            {
+                if (DateTime.TryParse(parts[0], out var timestamp))
+                {
+                    var actionAndStatus = parts[1];
+
+                    PowerAction action = PowerAction.Sleep;
+                    bool wasSuccessful = true;
+                    string? errorMessage = null;
+
+                    // Simple heuristic parsing for legacy entries
+                    if (actionAndStatus.Contains("시스템 종료") || actionAndStatus.Contains("Shutdown"))
+                    {
+                        action = PowerAction.Shutdown;
+                    }
+
+                    if (actionAndStatus.Contains("실패") || actionAndStatus.Contains("failed") || actionAndStatus.Contains("Failed"))
+                    {
+                        wasSuccessful = false;
+                        // Extract error message if possible
+                        var failureParts = actionAndStatus.Split('(');
+                        if (failureParts.Length > 1)
+                        {
+                            errorMessage = failureParts[1].TrimEnd(')');
+                        }
+                    }
+
+                    entry = new SleepLogEntry(timestamp, action, wasSuccessful, errorMessage);
+                    return true;
+                }
+            }
+
+            return false;
         }
         catch
         {

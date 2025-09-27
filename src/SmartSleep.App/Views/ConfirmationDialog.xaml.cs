@@ -1,4 +1,4 @@
-using System.Windows;
+﻿using System.Windows;
 using SmartSleep.App.ViewModels;
 
 namespace SmartSleep.App.Views;

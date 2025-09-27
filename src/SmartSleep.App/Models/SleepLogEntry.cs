@@ -1,3 +1,5 @@
+using SmartSleep.App.Utilities;
+
 namespace SmartSleep.App.Models;
 
 public class SleepLogEntry
@@ -19,12 +21,25 @@ public class SleepLogEntry
     {
         var actionText = PowerAction switch
         {
-            PowerAction.Sleep => "절전",
-            PowerAction.Shutdown => "시스템 종료",
-            _ => "전원"
+            PowerAction.Sleep => LocalizationManager.GetString("SleepLog_Action_Sleep"),
+            PowerAction.Shutdown => LocalizationManager.GetString("SleepLog_Action_Shutdown"),
+            _ => LocalizationManager.GetString("SleepLog_Action_Power")
         };
 
-        var statusText = WasSuccessful ? "성공" : $"실패 ({ErrorMessage})";
-        return $"{Timestamp:yyyy-MM-dd HH:mm:ss} - {actionText} {statusText}";
+        string statusText;
+        if (WasSuccessful)
+        {
+            statusText = LocalizationManager.GetString("SleepLog_Status_Success");
+        }
+        else if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            statusText = LocalizationManager.Format("SleepLog_Status_Failure", ErrorMessage);
+        }
+        else
+        {
+            statusText = LocalizationManager.GetString("SleepLog_Status_FailureNoReason");
+        }
+
+        return LocalizationManager.Format("SleepLog_Format", Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"), actionText, statusText);
     }
 }

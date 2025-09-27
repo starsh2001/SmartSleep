@@ -47,9 +47,9 @@ public class TrayIconService : IDisposable
         };
 
         var contextMenu = new Forms.ContextMenuStrip();
-        contextMenu.Items.Add("설정 열기", null, (_, _) => ShowSettings());
+        contextMenu.Items.Add(LocalizationManager.GetString("Tray_Menu_OpenSettings"), null, (_, _) => ShowSettings());
         contextMenu.Items.Add(new Forms.ToolStripSeparator());
-        contextMenu.Items.Add("종료", null, (_, _) => ExitApplication());
+        contextMenu.Items.Add(LocalizationManager.GetString("Tray_Menu_Exit"), null, (_, _) => ExitApplication());
         _notifyIcon.ContextMenuStrip = contextMenu;
         _notifyIcon.DoubleClick += (_, _) => ShowSettings();
 
@@ -117,7 +117,7 @@ public class TrayIconService : IDisposable
 
             HideTooltipWindow();
 
-            _notifyIcon.BalloonTipTitle = "SmartSleep";
+            _notifyIcon.BalloonTipTitle = LocalizationManager.GetString("Tooltip_Title");
             _notifyIcon.BalloonTipText = message;
             _notifyIcon.ShowBalloonTip(3000);
         });
@@ -194,24 +194,24 @@ public class TrayIconService : IDisposable
     {
         var lines = new List<(string Text, Brush Brush)>
         {
-            ("SmartSleep", Brushes.White)
+            (LocalizationManager.GetString("Tooltip_Title"), Brushes.White)
         };
 
         lines.Add(snapshot.InputMonitoringEnabled
-            ? ($"입력 {snapshot.InputIdle.TotalSeconds:F0}/{snapshot.InputIdleRequirement.TotalSeconds:F0}s", Brushes.White)
-            : ($"입력 OFF {snapshot.InputIdle.TotalSeconds:F0}s", Brushes.DimGray));
+            ? (LocalizationManager.Format("Tooltip_InputActive", snapshot.InputIdle.TotalSeconds, snapshot.InputIdleRequirement.TotalSeconds), Brushes.White)
+            : (LocalizationManager.Format("Tooltip_InputInactive", snapshot.InputIdle.TotalSeconds), Brushes.DimGray));
 
         lines.Add(snapshot.CpuMonitoringEnabled
-            ? ($"CPU {snapshot.CpuUsagePercent:F1}/{snapshot.CpuThresholdPercent:F1}% {snapshot.CpuIdleDuration.TotalSeconds:F0}/{snapshot.CpuIdleRequirement.TotalSeconds:F0}s", Brushes.White)
-            : ($"CPU OFF {snapshot.CpuUsagePercent:F1}%", Brushes.DimGray));
+            ? (LocalizationManager.Format("Tooltip_CpuActive", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent, snapshot.CpuIdleDuration.TotalSeconds, snapshot.CpuIdleRequirement.TotalSeconds), Brushes.White)
+            : (LocalizationManager.Format("Tooltip_CpuInactive", snapshot.CpuUsagePercent), Brushes.DimGray));
 
         lines.Add(snapshot.NetworkMonitoringEnabled
-            ? ($"네트워크 {snapshot.NetworkKilobytesPerSecond:F0}/{snapshot.NetworkThresholdKilobytesPerSecond:F0}KB {snapshot.NetworkIdleDuration.TotalSeconds:F0}/{snapshot.NetworkIdleRequirement.TotalSeconds:F0}s", Brushes.White)
-            : ($"네트워크 OFF {snapshot.NetworkKilobytesPerSecond:F0}KB", Brushes.DimGray));
+            ? (LocalizationManager.Format("Tooltip_NetworkActive", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond, snapshot.NetworkIdleDuration.TotalSeconds, snapshot.NetworkIdleRequirement.TotalSeconds), Brushes.White)
+            : (LocalizationManager.Format("Tooltip_NetworkInactive", snapshot.NetworkKilobytesPerSecond), Brushes.DimGray));
 
         if (snapshot.EnabledConditionCount > 0)
         {
-            lines.Add(($"조건 {snapshot.SatisfiedConditionCount}/{snapshot.EnabledConditionCount}", Brushes.White));
+            lines.Add((LocalizationManager.Format("Tooltip_Conditions", snapshot.SatisfiedConditionCount, snapshot.EnabledConditionCount), Brushes.White));
         }
 
         if (!string.IsNullOrWhiteSpace(snapshot.StatusMessage))

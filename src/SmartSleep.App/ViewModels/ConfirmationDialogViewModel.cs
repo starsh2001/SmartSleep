@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Threading;
 using SmartSleep.App.Models;
 
@@ -20,12 +21,13 @@ public class ConfirmationDialogViewModel : ViewModelBase
 
         var actionText = powerAction switch
         {
-            PowerAction.Sleep => "절전 모드",
-            PowerAction.Shutdown => "시스템 종료",
-            _ => "전원 동작"
+            PowerAction.Sleep => System.Windows.Application.Current.FindResource("Confirmation_Action_Sleep") as string ?? "sleep mode",
+            PowerAction.Shutdown => System.Windows.Application.Current.FindResource("Confirmation_Action_Shutdown") as string ?? "shutdown",
+            _ => System.Windows.Application.Current.FindResource("Confirmation_Action_Default") as string ?? "power action"
         };
 
-        Message = $"{countdownSeconds}초 뒤에 {actionText}가 실행됩니다.";
+        var messageFormat = System.Windows.Application.Current.FindResource("Confirmation_Message") as string ?? "{0}s until {1}. Proceed?";
+        Message = string.Format(messageFormat, countdownSeconds, actionText);
         UpdateCountdownText();
 
         _timer = new DispatcherTimer
@@ -66,7 +68,8 @@ public class ConfirmationDialogViewModel : ViewModelBase
 
     private void UpdateCountdownText()
     {
-        CountdownText = $"남은 시간: {_remainingSeconds}초";
+        var countdownFormat = System.Windows.Application.Current.FindResource("Confirmation_CountdownLabel") as string ?? "Remaining time: {0}s";
+        CountdownText = string.Format(countdownFormat, _remainingSeconds);
     }
 
     public void StopCountdown()

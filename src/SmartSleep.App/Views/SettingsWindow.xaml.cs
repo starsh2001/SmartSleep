@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using SmartSleep.App.Models;
 using SmartSleep.App.Services;
+using SmartSleep.App.Utilities;
 using SmartSleep.App.ViewModels;
 
 namespace SmartSleep.App.Views;
@@ -35,6 +36,7 @@ public partial class SettingsWindow : Window
         DataContext = ViewModel;
 
         _monitoringService.SnapshotAvailable += MonitoringServiceOnSnapshotAvailable;
+        LocalizationManager.LanguageChanged += OnLanguageChanged;
         _subscribed = true;
 
         if (_monitoringService.LastSnapshot is { } snapshot)
@@ -66,7 +68,7 @@ public partial class SettingsWindow : Window
 
         try
         {
-            ViewModel.StatusMessage = "적용 중...";
+            ViewModel.StatusMessage = LocalizationManager.GetString("Status_Applying");
             var updatedConfig = ViewModel.ToConfig(_currentConfig);
             await _configurationService.SaveAsync(updatedConfig).ConfigureAwait(true);
             _monitoringService.UpdateConfiguration(updatedConfig);
@@ -74,7 +76,7 @@ public partial class SettingsWindow : Window
             var autoStartResult = _autoStartService.TrySetAutoStart(updatedConfig.StartWithWindows, out var autoStartError);
             if (!autoStartResult)
             {
-                ViewModel.StatusMessage = autoStartError ?? "자동 시작 설정에 실패했습니다.";
+                ViewModel.StatusMessage = autoStartError ?? LocalizationManager.GetString("Status_AutoStartFailed");
                 return false;
             }
 
@@ -86,7 +88,7 @@ public partial class SettingsWindow : Window
                 ViewModel.UpdateLiveSnapshot(snapshot);
             }
 
-            ViewModel.StatusMessage = "적용되었습니다.";
+            ViewModel.StatusMessage = LocalizationManager.GetString("Status_Applied");
             return true;
         }
         catch (Exception ex)
@@ -106,11 +108,17 @@ public partial class SettingsWindow : Window
         Dispatcher.BeginInvoke(new Action(() => ViewModel.UpdateLiveSnapshot(snapshot)));
     }
 
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        Dispatcher.BeginInvoke(new Action(() => ViewModel.RefreshLiveStatus()));
+    }
+
     protected override void OnClosed(EventArgs e)
     {
         if (_subscribed)
         {
             _monitoringService.SnapshotAvailable -= MonitoringServiceOnSnapshotAvailable;
+            LocalizationManager.LanguageChanged -= OnLanguageChanged;
             _subscribed = false;
         }
 
