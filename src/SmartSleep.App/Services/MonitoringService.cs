@@ -395,7 +395,7 @@ public class MonitoringService : IDisposable
                 return $"{actionText} 요청 중";
             }
 
-            return $"예상 {actionText}까지 {Math.Ceiling(remaining)}초";
+            return $"{actionText}까지 {Math.Ceiling(remaining)}초";
         }
 
         bool cpuBlocksAll = config.Idle.UseCpuActivity && !cpuUsageOk &&
@@ -417,7 +417,7 @@ public class MonitoringService : IDisposable
         var totalRemaining = Math.Max(scheduleRemaining, conditionRemaining);
         totalRemaining = Math.Max(totalRemaining, cooldownRemainingSeconds);
 
-        return $"예상 {actionText}까지 {Math.Ceiling(Math.Max(0, totalRemaining))}초";
+        return $"{actionText}까지 {Math.Ceiling(Math.Max(0, totalRemaining))}초";
     }
 
     private double GetCooldownRemainingSeconds(DateTime nowUtc)
