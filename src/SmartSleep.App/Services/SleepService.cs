@@ -23,13 +23,19 @@ public class SleepService
     {
         if (showConfirmation)
         {
-            var viewModel = new ConfirmationDialogViewModel(action, countdownSeconds);
-            var dialog = new ConfirmationDialog(viewModel);
+            bool? dialogResult = null;
 
-            var result = dialog.ShowDialog();
-            viewModel.StopCountdown();
+            // Ensure dialog runs on UI thread
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                var viewModel = new ConfirmationDialogViewModel(action, countdownSeconds);
+                var dialog = new ConfirmationDialog(viewModel);
 
-            if (result != true)
+                dialogResult = dialog.ShowDialog();
+                viewModel.StopCountdown();
+            });
+
+            if (dialogResult != true)
             {
                 errorCode = 0;
                 return false;
