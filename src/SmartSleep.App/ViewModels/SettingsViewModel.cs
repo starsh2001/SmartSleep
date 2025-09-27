@@ -24,42 +24,42 @@ public class SettingsViewModel : ViewModelBase
     private int _pollingIntervalSeconds;
     // Schedule mode
     private ScheduleMode _scheduleMode = ScheduleMode.Always;
-    private string _dailyStartText = "00:00";
-    private string _dailyEndText = "00:00";
+    private string _dailyStartText = "22:00";
+    private string _dailyEndText = "06:00";
 
     // Weekly schedule properties
-    private bool _mondayEnabled;
-    private bool _mondayAllDay;
+    private bool _mondayEnabled = true;
+    private bool _mondayAllDay = true;
     private string _mondayStartText = "00:00";
     private string _mondayEndText = "00:00";
 
-    private bool _tuesdayEnabled;
-    private bool _tuesdayAllDay;
+    private bool _tuesdayEnabled = true;
+    private bool _tuesdayAllDay = true;
     private string _tuesdayStartText = "00:00";
     private string _tuesdayEndText = "00:00";
 
-    private bool _wednesdayEnabled;
-    private bool _wednesdayAllDay;
+    private bool _wednesdayEnabled = true;
+    private bool _wednesdayAllDay = true;
     private string _wednesdayStartText = "00:00";
     private string _wednesdayEndText = "00:00";
 
-    private bool _thursdayEnabled;
-    private bool _thursdayAllDay;
+    private bool _thursdayEnabled = true;
+    private bool _thursdayAllDay = true;
     private string _thursdayStartText = "00:00";
     private string _thursdayEndText = "00:00";
 
-    private bool _fridayEnabled;
-    private bool _fridayAllDay;
+    private bool _fridayEnabled = true;
+    private bool _fridayAllDay = true;
     private string _fridayStartText = "00:00";
     private string _fridayEndText = "00:00";
 
-    private bool _saturdayEnabled;
-    private bool _saturdayAllDay;
+    private bool _saturdayEnabled = true;
+    private bool _saturdayAllDay = true;
     private string _saturdayStartText = "00:00";
     private string _saturdayEndText = "00:00";
 
-    private bool _sundayEnabled;
-    private bool _sundayAllDay;
+    private bool _sundayEnabled = true;
+    private bool _sundayAllDay = true;
     private string _sundayStartText = "00:00";
     private string _sundayEndText = "00:00";
     private bool _startWithWindows;
@@ -70,6 +70,7 @@ public class SettingsViewModel : ViewModelBase
     private int _sleepCooldownSeconds = 45;
     private string _statusMessage = string.Empty;
 
+    private AppLanguage _language = AppLanguage.English;
     private string _liveInputStatus = "입력 유휴: 수집 중";
     private string _liveCpuStatus = string.Empty;
     private string _liveNetworkStatus = string.Empty;
@@ -220,13 +221,25 @@ public class SettingsViewModel : ViewModelBase
     public bool MondayEnabled
     {
         get => _mondayEnabled;
-        set => SetProperty(ref _mondayEnabled, value);
+        set
+        {
+            if (SetProperty(ref _mondayEnabled, value))
+            {
+                OnPropertyChanged(nameof(MondayTimeEnabled));
+            }
+        }
     }
 
     public bool MondayAllDay
     {
         get => _mondayAllDay;
-        set => SetProperty(ref _mondayAllDay, value);
+        set
+        {
+            if (SetProperty(ref _mondayAllDay, value))
+            {
+                OnPropertyChanged(nameof(MondayTimeEnabled));
+            }
+        }
     }
 
     public string MondayStartText
@@ -247,13 +260,25 @@ public class SettingsViewModel : ViewModelBase
     public bool TuesdayEnabled
     {
         get => _tuesdayEnabled;
-        set => SetProperty(ref _tuesdayEnabled, value);
+        set
+        {
+            if (SetProperty(ref _tuesdayEnabled, value))
+            {
+                OnPropertyChanged(nameof(TuesdayTimeEnabled));
+            }
+        }
     }
 
     public bool TuesdayAllDay
     {
         get => _tuesdayAllDay;
-        set => SetProperty(ref _tuesdayAllDay, value);
+        set
+        {
+            if (SetProperty(ref _tuesdayAllDay, value))
+            {
+                OnPropertyChanged(nameof(TuesdayTimeEnabled));
+            }
+        }
     }
 
     public string TuesdayStartText
@@ -274,13 +299,25 @@ public class SettingsViewModel : ViewModelBase
     public bool WednesdayEnabled
     {
         get => _wednesdayEnabled;
-        set => SetProperty(ref _wednesdayEnabled, value);
+        set
+        {
+            if (SetProperty(ref _wednesdayEnabled, value))
+            {
+                OnPropertyChanged(nameof(WednesdayTimeEnabled));
+            }
+        }
     }
 
     public bool WednesdayAllDay
     {
         get => _wednesdayAllDay;
-        set => SetProperty(ref _wednesdayAllDay, value);
+        set
+        {
+            if (SetProperty(ref _wednesdayAllDay, value))
+            {
+                OnPropertyChanged(nameof(WednesdayTimeEnabled));
+            }
+        }
     }
 
     public string WednesdayStartText
@@ -301,13 +338,25 @@ public class SettingsViewModel : ViewModelBase
     public bool ThursdayEnabled
     {
         get => _thursdayEnabled;
-        set => SetProperty(ref _thursdayEnabled, value);
+        set
+        {
+            if (SetProperty(ref _thursdayEnabled, value))
+            {
+                OnPropertyChanged(nameof(ThursdayTimeEnabled));
+            }
+        }
     }
 
     public bool ThursdayAllDay
     {
         get => _thursdayAllDay;
-        set => SetProperty(ref _thursdayAllDay, value);
+        set
+        {
+            if (SetProperty(ref _thursdayAllDay, value))
+            {
+                OnPropertyChanged(nameof(ThursdayTimeEnabled));
+            }
+        }
     }
 
     public string ThursdayStartText
@@ -328,13 +377,25 @@ public class SettingsViewModel : ViewModelBase
     public bool FridayEnabled
     {
         get => _fridayEnabled;
-        set => SetProperty(ref _fridayEnabled, value);
+        set
+        {
+            if (SetProperty(ref _fridayEnabled, value))
+            {
+                OnPropertyChanged(nameof(FridayTimeEnabled));
+            }
+        }
     }
 
     public bool FridayAllDay
     {
         get => _fridayAllDay;
-        set => SetProperty(ref _fridayAllDay, value);
+        set
+        {
+            if (SetProperty(ref _fridayAllDay, value))
+            {
+                OnPropertyChanged(nameof(FridayTimeEnabled));
+            }
+        }
     }
 
     public string FridayStartText
@@ -355,13 +416,25 @@ public class SettingsViewModel : ViewModelBase
     public bool SaturdayEnabled
     {
         get => _saturdayEnabled;
-        set => SetProperty(ref _saturdayEnabled, value);
+        set
+        {
+            if (SetProperty(ref _saturdayEnabled, value))
+            {
+                OnPropertyChanged(nameof(SaturdayTimeEnabled));
+            }
+        }
     }
 
     public bool SaturdayAllDay
     {
         get => _saturdayAllDay;
-        set => SetProperty(ref _saturdayAllDay, value);
+        set
+        {
+            if (SetProperty(ref _saturdayAllDay, value))
+            {
+                OnPropertyChanged(nameof(SaturdayTimeEnabled));
+            }
+        }
     }
 
     public string SaturdayStartText
@@ -382,13 +455,25 @@ public class SettingsViewModel : ViewModelBase
     public bool SundayEnabled
     {
         get => _sundayEnabled;
-        set => SetProperty(ref _sundayEnabled, value);
+        set
+        {
+            if (SetProperty(ref _sundayEnabled, value))
+            {
+                OnPropertyChanged(nameof(SundayTimeEnabled));
+            }
+        }
     }
 
     public bool SundayAllDay
     {
         get => _sundayAllDay;
-        set => SetProperty(ref _sundayAllDay, value);
+        set
+        {
+            if (SetProperty(ref _sundayAllDay, value))
+            {
+                OnPropertyChanged(nameof(SundayTimeEnabled));
+            }
+        }
     }
 
     public string SundayStartText
@@ -511,6 +596,19 @@ public class SettingsViewModel : ViewModelBase
         private set => SetProperty(ref _liveStatusBrush, value);
     }
 
+    public AppLanguage Language
+    {
+        get => _language;
+        set
+        {
+            if (SetProperty(ref _language, value))
+            {
+                LocalizationManager.SetLanguage(value);
+                RefreshLiveStatus();
+            }
+        }
+    }
+
 
     public static SettingsViewModel FromConfig(AppConfig config)
     {
@@ -574,7 +672,8 @@ public class SettingsViewModel : ViewModelBase
             ShowConfirmationDialog = config.ShowConfirmationDialog,
             ConfirmationCountdownSeconds = config.ConfirmationCountdownSeconds,
             EnableSleepLogging = config.EnableSleepLogging,
-            SleepCooldownSeconds = cooldown
+            SleepCooldownSeconds = cooldown,
+            Language = config.Language
         };
     }
 
@@ -582,7 +681,7 @@ public class SettingsViewModel : ViewModelBase
     {
         if (InputIdleSeconds < 0)
         {
-            validationError = "입력 유휴 시간(초)은 0 이상이어야 합니다.";
+            validationError = "Input idle time must be 0 or greater.";
             return false;
         }
 
@@ -590,20 +689,20 @@ public class SettingsViewModel : ViewModelBase
         {
             if (CpuUsageThreshold < 0 || CpuUsageThreshold > 100)
             {
-                validationError = "CPU 임계값은 0에서 100 사이여야 합니다.";
+                validationError = "CPU threshold must be between 0 and 100.";
                 return false;
             }
 
             if (CpuIdleDurationSeconds < 0)
             {
-                validationError = "CPU 유휴 시간(초)은 0 이상이어야 합니다.";
+                validationError = "CPU idle duration must be 0 or greater.";
                 return false;
             }
         }
 
         if (CpuSmoothingWindow <= 0)
         {
-            validationError = "CPU 이동 평균 샘플 수는 1 이상이어야 합니다.";
+            validationError = "CPU smoothing window must be 1 or greater.";
             return false;
         }
 
@@ -611,35 +710,41 @@ public class SettingsViewModel : ViewModelBase
         {
             if (NetworkThreshold < 0)
             {
-                validationError = "네트워크 임계값은 0 이상이어야 합니다.";
+                validationError = "Network threshold must be 0 or greater.";
                 return false;
             }
 
             if (NetworkIdleDurationSeconds < 0)
             {
-                validationError = "네트워크 유휴 시간(초)은 0 이상이어야 합니다.";
+                validationError = "Network idle duration must be 0 or greater.";
                 return false;
             }
         }
 
         if (NetworkSmoothingWindow <= 0)
         {
-            validationError = "네트워크 이동 평균 샘플 수는 1 이상이어야 합니다.";
+            validationError = "Network smoothing window must be 1 or greater.";
             return false;
         }
 
         if (SleepCooldownSeconds < 10)
         {
-            validationError = "절전 재시도 대기 시간은 10초 이상이어야 합니다.";
+            validationError = "Sleep cooldown must be 10 seconds or greater.";
             return false;
         }
 
         // Validate schedule time formats based on mode
         if (ScheduleMode == ScheduleMode.Daily)
         {
-            if (!TimeSpan.TryParse(DailyStartText, out _) || !TimeSpan.TryParse(DailyEndText, out _))
+            if (!TimeSpan.TryParse(DailyStartText, out var dailyStart) || !TimeSpan.TryParse(DailyEndText, out var dailyEnd))
             {
-                validationError = "매일 감시 시간대는 HH:mm 형식으로 입력해야 합니다.";
+                validationError = "Daily monitoring time must be in HH:mm format.";
+                return false;
+            }
+
+            if (dailyStart == TimeSpan.Zero && dailyEnd == TimeSpan.Zero)
+            {
+                validationError = "Daily monitoring time cannot be 00:00 ~ 00:00. Use 'Disabled' mode instead.";
                 return false;
             }
         }
@@ -658,17 +763,26 @@ public class SettingsViewModel : ViewModelBase
 
             foreach (var (enabled, startText, endText, dayName) in timeTexts)
             {
-                if (enabled && (!TimeSpan.TryParse(startText, out _) || !TimeSpan.TryParse(endText, out _)))
+                if (enabled)
                 {
-                    validationError = $"{dayName} 감시 시간대는 HH:mm 형식으로 입력해야 합니다.";
-                    return false;
+                    if (!TimeSpan.TryParse(startText, out var start) || !TimeSpan.TryParse(endText, out var end))
+                    {
+                        validationError = $"{dayName} monitoring time must be in HH:mm format.";
+                        return false;
+                    }
+
+                    if (start == TimeSpan.Zero && end == TimeSpan.Zero)
+                    {
+                        validationError = $"{dayName} monitoring time cannot be 00:00 ~ 00:00. Use 'All Day' or disable the day instead.";
+                        return false;
+                    }
                 }
             }
         }
 
         if (PollingIntervalSeconds <= 0)
         {
-            validationError = "모니터링 주기는 0보다 커야 합니다.";
+            validationError = "Monitoring interval must be greater than 0.";
             return false;
         }
 
@@ -697,6 +811,7 @@ public class SettingsViewModel : ViewModelBase
         config.ConfirmationCountdownSeconds = Math.Max(1, ConfirmationCountdownSeconds);
         config.EnableSleepLogging = EnableSleepLogging;
         config.SleepCooldownSeconds = Math.Max(10, SleepCooldownSeconds);
+        config.Language = Language;
 
         // Schedule mode
         config.Schedule.Mode = ScheduleMode;
@@ -801,11 +916,11 @@ public class SettingsViewModel : ViewModelBase
         RefreshLiveStatus();
     }
 
-    private void RefreshLiveStatus()
+    public void RefreshLiveStatus()
     {
         if (_lastSnapshot == null)
         {
-            LiveInputStatus = "입력 유휴: 수집 중";
+            LiveInputStatus = "Input: Collecting"; // TODO: Add localized collecting text
             LiveCpuStatus = string.Empty;
             LiveNetworkStatus = string.Empty;
             LiveCombinationStatus = string.Empty;
@@ -818,46 +933,41 @@ public class SettingsViewModel : ViewModelBase
 
         if (snapshot.InputMonitoringEnabled)
         {
-            LiveInputStatus = $"입력 유휴 {snapshot.InputIdle.TotalSeconds:F0}s / {snapshot.InputIdleRequirement.TotalSeconds:F0}s";
+            LiveInputStatus = LocalizationManager.Format("Tooltip_InputActive", snapshot.InputIdle.TotalSeconds, snapshot.InputIdleRequirement.TotalSeconds);
         }
         else
         {
-            LiveInputStatus = $"입력 유휴 {snapshot.InputIdle.TotalSeconds:F0}s (미감시)";
+            LiveInputStatus = LocalizationManager.Format("Tooltip_InputInactive", snapshot.InputIdle.TotalSeconds);
         }
 
         if (snapshot.CpuMonitoringEnabled)
         {
-            LiveCpuStatus = $"CPU {snapshot.CpuUsagePercent:F1}% / {snapshot.CpuThresholdPercent:F1}% | 유휴 {snapshot.CpuIdleDuration.TotalSeconds:F0}/{snapshot.CpuIdleRequirement.TotalSeconds:F0}s";
+            LiveCpuStatus = LocalizationManager.Format("Tooltip_CpuActive", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent, snapshot.CpuIdleDuration.TotalSeconds, snapshot.CpuIdleRequirement.TotalSeconds);
         }
         else
         {
-            LiveCpuStatus = $"CPU {snapshot.CpuUsagePercent:F1}% (미감시)";
+            LiveCpuStatus = LocalizationManager.Format("Tooltip_CpuInactive", snapshot.CpuUsagePercent);
         }
 
         if (snapshot.NetworkMonitoringEnabled)
         {
-            LiveNetworkStatus = $"네트워크 {snapshot.NetworkKilobytesPerSecond:F0}KB/s / {snapshot.NetworkThresholdKilobytesPerSecond:F0}KB/s | 유휴 {snapshot.NetworkIdleDuration.TotalSeconds:F0}/{snapshot.NetworkIdleRequirement.TotalSeconds:F0}s";
+            LiveNetworkStatus = LocalizationManager.Format("Tooltip_NetworkActive", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond, snapshot.NetworkIdleDuration.TotalSeconds, snapshot.NetworkIdleRequirement.TotalSeconds);
         }
         else
         {
-            LiveNetworkStatus = $"네트워크 {snapshot.NetworkKilobytesPerSecond:F0}KB/s (미감시)";
+            LiveNetworkStatus = LocalizationManager.Format("Tooltip_NetworkInactive", snapshot.NetworkKilobytesPerSecond);
         }
 
         if (snapshot.EnabledConditionCount > 0)
         {
-            LiveCombinationStatus = $"조건 {snapshot.SatisfiedConditionCount}/{snapshot.EnabledConditionCount}";
+            LiveCombinationStatus = LocalizationManager.Format("Tooltip_Conditions", snapshot.SatisfiedConditionCount, snapshot.EnabledConditionCount);
         }
         else
         {
-            LiveCombinationStatus = "조건 비활성화";
+            LiveCombinationStatus = LocalizationManager.GetString("Status_NoConditions");
         }
 
         var statusText = snapshot.StatusMessage;
-        if (!string.IsNullOrWhiteSpace(statusText) && snapshot.InputMonitoringEnabled && statusText.StartsWith("입력 유휴", StringComparison.Ordinal))
-        {
-            statusText = string.Empty;
-        }
-
         var (displayText, brush) = StatusDisplayHelper.FormatStatus(statusText);
         LiveStatusMessage = displayText;
         LiveStatusBrush = brush;

@@ -201,7 +201,7 @@ public class MonitoringService : IDisposable
                 _lastCpuActiveUtc = nowUtc;
                 _lastNetworkActiveUtc = nowUtc;
                 _lastSleepAttemptUtc = nowUtc;
-                statusMessage = "절전 요청";
+                statusMessage = LocalizationManager.Format("Status_ActionNow", GetActionText(snapshotConfig.PowerAction));
             }
 
             var snapshot = new MonitoringSnapshot
@@ -359,22 +359,21 @@ public class MonitoringService : IDisposable
     {
         if (enabledCount == 0)
         {
-            return "활성화된 조건 없음";
+            return LocalizationManager.GetString("Status_NoConditions");
         }
 
-        var actionText = config.PowerAction switch
-        {
-            Models.PowerAction.Sleep => "절전",
-            Models.PowerAction.Shutdown => "시스템 종료",
-            _ => "전원"
-        };
+        var actionText = GetActionText(config.PowerAction);
 
         var nowLocal = nowUtc.ToLocalTime();
         var scheduleRemaining = GetScheduleRemainingSeconds(config.Schedule, nowLocal);
 
         if (!scheduleActive && HasAnyActiveSchedule(config.Schedule))
         {
-            return $"감시 시작까지 {Math.Ceiling(scheduleRemaining)}초";
+            if (scheduleRemaining == double.MaxValue)
+            {
+                return LocalizationManager.GetString("Status_MonitoringDisabled");
+            }
+            return LocalizationManager.Format("Status_NextSchedule", Math.Ceiling(Math.Min(scheduleRemaining, 999999)));
         }
 
         double inputRemaining = config.Idle.UseInputActivity
@@ -391,35 +390,56 @@ public class MonitoringService : IDisposable
 
         if (combinationSatisfied)
         {
-            var remaining = Math.Max(scheduleRemaining, cooldownRemainingSeconds);
-            if (remaining <= 0)
+            // If schedule is not active, don't show action countdown
+            if (!scheduleActive && HasAnyActiveSchedule(config.Schedule))
             {
-                return $"{actionText} 요청 중";
+                return LocalizationManager.GetString("Status_NotMonitoring");
             }
 
-            return $"{actionText}까지 {Math.Ceiling(remaining)}초";
+            var remaining = Math.Max(scheduleRemaining, cooldownRemainingSeconds);
+            if (remaining == double.MaxValue)
+            {
+                return LocalizationManager.GetString("Status_MonitoringDisabled");
+            }
+            if (remaining <= 0)
+            {
+                return LocalizationManager.Format("Status_ActionNow", actionText);
+            }
+
+            return LocalizationManager.Format("Status_ActionIn", actionText, Math.Ceiling(remaining));
         }
 
         bool cpuBlocksAll = config.Idle.UseCpuActivity && !cpuUsageOk &&
                              (!config.Idle.UseInputActivity && !config.Idle.UseNetworkActivity);
         if (cpuBlocksAll)
         {
-            return $"CPU 사용량 {cpuUsage:F1}%/{config.Idle.CpuUsagePercentageThreshold:F1}%";
+            return LocalizationManager.Format("Status_CpuBlocking", cpuUsage, config.Idle.CpuUsagePercentageThreshold);
         }
 
         bool networkBlocksAll = config.Idle.UseNetworkActivity && !networkUsageOk &&
                                 (!config.Idle.UseInputActivity && !config.Idle.UseCpuActivity);
         if (networkBlocksAll)
         {
-            return $"네트워크 {networkUsage:F0}/{config.Idle.NetworkKilobytesPerSecondThreshold:F0}KB/s";
+            return LocalizationManager.Format("Status_NetworkBlocking", networkUsage, config.Idle.NetworkKilobytesPerSecondThreshold);
         }
 
         var conditionRemaining = Math.Max(inputRemaining, Math.Max(cpuRemaining, networkRemaining));
 
+        // If schedule is not active and we have active schedules, show not monitoring
+        if (!scheduleActive && HasAnyActiveSchedule(config.Schedule) && conditionRemaining <= 0)
+        {
+            return LocalizationManager.GetString("Status_NotMonitoring");
+        }
+
         var totalRemaining = Math.Max(scheduleRemaining, conditionRemaining);
         totalRemaining = Math.Max(totalRemaining, cooldownRemainingSeconds);
 
-        return $"{actionText}까지 {Math.Ceiling(Math.Max(0, totalRemaining))}초";
+        if (totalRemaining == double.MaxValue)
+        {
+            return LocalizationManager.GetString("Status_MonitoringDisabled");
+        }
+
+        return LocalizationManager.Format("Status_ActionIn", actionText, Math.Ceiling(Math.Max(0, totalRemaining)));
     }
 
     private double GetCooldownRemainingSeconds(DateTime nowUtc)
@@ -435,9 +455,17 @@ public class MonitoringService : IDisposable
 
     private static bool HasAnyActiveSchedule(ScheduleSettings schedule)
     {
-        return schedule.Monday.Enabled || schedule.Tuesday.Enabled || schedule.Wednesday.Enabled ||
-               schedule.Thursday.Enabled || schedule.Friday.Enabled || schedule.Saturday.Enabled ||
-               schedule.Sunday.Enabled;
+        return schedule.Mode switch
+        {
+            ScheduleMode.Always => false, // Always mode means no schedule restrictions
+            ScheduleMode.Daily => true,   // Daily mode has schedule restrictions
+            ScheduleMode.Weekly => schedule.Monday.Enabled || schedule.Tuesday.Enabled ||
+                                  schedule.Wednesday.Enabled || schedule.Thursday.Enabled ||
+                                  schedule.Friday.Enabled || schedule.Saturday.Enabled ||
+                                  schedule.Sunday.Enabled,
+            ScheduleMode.Disabled => true, // Disabled mode means monitoring is disabled
+            _ => false
+        };
     }
 
     private static double GetScheduleRemainingSeconds(ScheduleSettings schedule, DateTime nowLocal)
@@ -445,6 +473,52 @@ public class MonitoringService : IDisposable
         if (schedule.IsWithinWindow(nowLocal))
         {
             return 0;
+        }
+
+        return schedule.Mode switch
+        {
+            ScheduleMode.Always => 0, // Always active, no remaining time
+            ScheduleMode.Daily => GetDailyScheduleRemainingSeconds(schedule, nowLocal),
+            ScheduleMode.Weekly => GetWeeklyScheduleRemainingSeconds(schedule, nowLocal),
+            ScheduleMode.Disabled => double.MaxValue, // Never activate
+            _ => 0
+        };
+    }
+
+    private static double GetDailyScheduleRemainingSeconds(ScheduleSettings schedule, DateTime nowLocal)
+    {
+        var today = nowLocal.Date;
+        var todayStart = today + schedule.DailyStartTime;
+        var todayEnd = today + schedule.DailyEndTime;
+
+        // If start time hasn't arrived today
+        if (nowLocal < todayStart)
+        {
+            return (todayStart - nowLocal).TotalSeconds;
+        }
+
+        // If we're past today's window, check tomorrow
+        if (nowLocal >= todayEnd || (schedule.DailyEndTime < schedule.DailyStartTime && nowLocal < todayEnd))
+        {
+            var tomorrow = today.AddDays(1);
+            var tomorrowStart = tomorrow + schedule.DailyStartTime;
+            return (tomorrowStart - nowLocal).TotalSeconds;
+        }
+
+        return 0;
+    }
+
+    private static double GetWeeklyScheduleRemainingSeconds(ScheduleSettings schedule, DateTime nowLocal)
+    {
+        // Check if any day is enabled
+        bool anyDayEnabled = schedule.Monday.Enabled || schedule.Tuesday.Enabled ||
+                           schedule.Wednesday.Enabled || schedule.Thursday.Enabled ||
+                           schedule.Friday.Enabled || schedule.Saturday.Enabled ||
+                           schedule.Sunday.Enabled;
+
+        if (!anyDayEnabled)
+        {
+            return double.MaxValue; // No days enabled, never activate
         }
 
         // Find next active schedule window
@@ -474,7 +548,7 @@ public class MonitoringService : IDisposable
             currentDay = currentDay.AddDays(1);
         }
 
-        return 0; // No active schedule found
+        return double.MaxValue; // No active schedule found (should not happen)
     }
 
     private static DaySchedule GetDaySchedule(ScheduleSettings schedule, DayOfWeek dayOfWeek)
@@ -505,12 +579,7 @@ public class MonitoringService : IDisposable
         var attemptUtc = DateTime.UtcNow;
         var previousSuccess = _lastSleepSuccessUtc;
 
-        var actionText = currentConfig.PowerAction switch
-        {
-            Models.PowerAction.Sleep => "절전",
-            Models.PowerAction.Shutdown => "시스템 종료",
-            _ => "전원"
-        };
+        var actionText = GetActionText(currentConfig.PowerAction);
 
         var success = _sleepService.TryExecutePowerActionWithConfirmation(
             currentConfig.PowerAction,
@@ -541,22 +610,22 @@ public class MonitoringService : IDisposable
             _lastSleepSuccessUtc = attemptUtc;
             var lastSuccessText = previousSuccess.HasValue
                 ? previousSuccess.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
-                : "기록 없음";
-            SleepTriggered?.Invoke(this, $"{actionText} 명령 전송 (마지막 성공: {lastSuccessText})");
+                : LocalizationManager.GetString("Monitoring_LastSuccessUnknown");
+            SleepTriggered?.Invoke(this, LocalizationManager.Format("Notification_ActionSucceeded", actionText, lastSuccessText));
         }
         else
         {
             var lastSuccessText = _lastSleepSuccessUtc.HasValue
                 ? _lastSleepSuccessUtc.Value.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
-                : "기록 없음";
+                : LocalizationManager.GetString("Monitoring_LastSuccessUnknown");
 
             if (currentConfig.ShowConfirmationDialog && errorCode == 0)
             {
-                SleepTriggered?.Invoke(this, $"{actionText} 실행 취소됨 (마지막 성공: {lastSuccessText})");
+                SleepTriggered?.Invoke(this, LocalizationManager.Format("Notification_ActionCancelled", actionText, lastSuccessText));
             }
             else
             {
-                SleepTriggered?.Invoke(this, $"{actionText} 실행 실패 (오류 코드: {errorCode}, 마지막 성공: {lastSuccessText})");
+                SleepTriggered?.Invoke(this, LocalizationManager.Format("Notification_ActionFailed", actionText, errorCode, lastSuccessText));
             }
         }
     }
@@ -564,10 +633,10 @@ public class MonitoringService : IDisposable
     private void OnGamepadConnectionChanged(object? sender, GamepadConnectionEventArgs e)
     {
         var message = e.IsConnected
-            ? $"{e.DeviceName} 연결됨 (총 {e.TotalConnectedCount}개)"
-            : $"{e.DeviceName} 해제됨 (총 {e.TotalConnectedCount}개)";
+            ? LocalizationManager.Format("Gamepad_BalloonConnected", e.DeviceName, e.TotalConnectedCount)
+            : LocalizationManager.Format("Gamepad_BalloonDisconnected", e.DeviceName, e.TotalConnectedCount);
 
-        SleepTriggered?.Invoke(this, $"게임패드: {message}");
+        SleepTriggered?.Invoke(this, LocalizationManager.Format("Gamepad_BalloonPrefix", message));
     }
 
     public void Dispose()
@@ -583,6 +652,16 @@ public class MonitoringService : IDisposable
         var seconds = Math.Max(10, _config.SleepCooldownSeconds);
         _sleepCooldown = TimeSpan.FromSeconds(seconds);
         _config.SleepCooldownSeconds = seconds;
+    }
+
+    private static string GetActionText(PowerAction powerAction)
+    {
+        return powerAction switch
+        {
+            PowerAction.Sleep => LocalizationManager.GetString("PowerAction_Sleep"),
+            PowerAction.Shutdown => LocalizationManager.GetString("PowerAction_Shutdown"),
+            _ => LocalizationManager.GetString("PowerAction_Generic")
+        };
     }
 }
 

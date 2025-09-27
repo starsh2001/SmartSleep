@@ -1,0 +1,133 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="App.DisplayName">SmartSleep</sys:String>
+    <sys:String x:Key="App.AlreadyRunning">SmartSleep이 이미 실행 중입니다.</sys:String>
+    <sys:String x:Key="App.NotInitialized">애플리케이션이 초기화되지 않았습니다.</sys:String>
+
+    <sys:String x:Key="Settings_Title">SmartSleep 설정</sys:String>
+    <sys:String x:Key="Settings_Section_CurrentStatus">현재 상태</sys:String>
+    <sys:String x:Key="Settings_Section_Monitoring">모니터링 기준</sys:String>
+    <sys:String x:Key="Settings_UseInputActivity">마우스/키보드 활동 사용</sys:String>
+    <sys:String x:Key="Settings_IncludeGamepadInput">게임패드 입력 포함</sys:String>
+    <sys:String x:Key="Settings_InputIdleThreshold">입력 유휴 판정 (초):</sys:String>
+    <sys:String x:Key="Settings_UseCpuActivity">CPU 활동 사용</sys:String>
+    <sys:String x:Key="Settings_CpuThreshold">CPU 임계값 (%):</sys:String>
+    <sys:String x:Key="Settings_CpuIdleDuration">CPU 유휴 필요 시간 (초):</sys:String>
+    <sys:String x:Key="Settings_CpuSmoothingWindow">CPU 이동 평균 샘플 수:</sys:String>
+    <sys:String x:Key="Settings_UseNetworkActivity">네트워크 활동 사용</sys:String>
+    <sys:String x:Key="Settings_NetworkThreshold">네트워크 임계값 (KB/s):</sys:String>
+    <sys:String x:Key="Settings_NetworkIdleDuration">네트워크 유휴 필요 시간 (초):</sys:String>
+    <sys:String x:Key="Settings_NetworkSmoothingWindow">네트워크 이동 평균 샘플 수:</sys:String>
+    <sys:String x:Key="Settings_PollingInterval">모니터링 주기 (초):</sys:String>
+    <sys:String x:Key="Settings_Section_Schedule">감시 시간 설정</sys:String>
+    <sys:String x:Key="Settings_ScheduleModeLabel">감시 모드:</sys:String>
+    <sys:String x:Key="Settings_ScheduleMode_Always">항상 감시</sys:String>
+    <sys:String x:Key="Settings_ScheduleMode_Daily">매일 같은 시간대</sys:String>
+    <sys:String x:Key="Settings_ScheduleMode_Weekly">요일별 세부 설정</sys:String>
+    <sys:String x:Key="Settings_DailyScheduleHeader">매일 감시 시간</sys:String>
+    <sys:String x:Key="Settings_Schedule_Start">시작 (HH:mm):</sys:String>
+    <sys:String x:Key="Settings_Schedule_End">종료 (HH:mm):</sys:String>
+    <sys:String x:Key="Settings_WeeklyScheduleHeader">요일별 감시 시간</sys:String>
+    <sys:String x:Key="Day_Monday">월요일</sys:String>
+    <sys:String x:Key="Day_Tuesday">화요일</sys:String>
+    <sys:String x:Key="Day_Wednesday">수요일</sys:String>
+    <sys:String x:Key="Day_Thursday">목요일</sys:String>
+    <sys:String x:Key="Day_Friday">금요일</sys:String>
+    <sys:String x:Key="Day_Saturday">토요일</sys:String>
+    <sys:String x:Key="Day_Sunday">일요일</sys:String>
+    <sys:String x:Key="Settings_AllDay">24시간</sys:String>
+    <sys:String x:Key="Settings_Section_Power">전원 동작</sys:String>
+    <sys:String x:Key="Settings_PowerActionLabel">유휴 시 동작:</sys:String>
+    <sys:String x:Key="PowerAction_Sleep">절전</sys:String>
+    <sys:String x:Key="PowerAction_Shutdown">시스템 종료</sys:String>
+    <sys:String x:Key="PowerAction_Generic">전원</sys:String>
+    <sys:String x:Key="Settings_ShowConfirmation">실행 전 확인 대화상자 표시</sys:String>
+    <sys:String x:Key="Settings_ConfirmationCountdown">확인 대기 시간 (초):</sys:String>
+    <sys:String x:Key="Settings_Section_Misc">기타</sys:String>
+    <sys:String x:Key="Settings_StartWithWindows">Windows 시작 시 자동 실행</sys:String>
+    <sys:String x:Key="Settings_EnableSleepLogging">절전/종료 로그 남기기</sys:String>
+    <sys:String x:Key="Settings_LanguageLabel">언어:</sys:String>
+    <sys:String x:Key="Settings_Language_English">영어</sys:String>
+    <sys:String x:Key="Settings_Language_Korean">한국어</sys:String>
+    <sys:String x:Key="Settings_Button_Cancel">취소</sys:String>
+    <sys:String x:Key="Settings_Button_Apply">적용</sys:String>
+    <sys:String x:Key="Settings_Button_Ok">확인</sys:String>
+
+    <sys:String x:Key="Status_Applying">적용 중...</sys:String>
+    <sys:String x:Key="Status_AutoStartFailed">자동 시작 설정에 실패했습니다.</sys:String>
+    <sys:String x:Key="Status_Applied">적용되었습니다.</sys:String>
+
+    <sys:String x:Key="Validation_InputIdleNonNegative">입력 유휴 시간(초)은 0 이상이어야 합니다.</sys:String>
+    <sys:String x:Key="Validation_CpuThresholdRange">CPU 임계값은 0에서 100 사이여야 합니다.</sys:String>
+    <sys:String x:Key="Validation_CpuIdleNonNegative">CPU 유휴 시간(초)은 0 이상이어야 합니다.</sys:String>
+    <sys:String x:Key="Validation_CpuSmoothingPositive">CPU 이동 평균 샘플 수는 1 이상이어야 합니다.</sys:String>
+    <sys:String x:Key="Validation_NetworkThresholdNonNegative">네트워크 임계값은 0 이상이어야 합니다.</sys:String>
+    <sys:String x:Key="Validation_NetworkIdleNonNegative">네트워크 유휴 시간(초)은 0 이상이어야 합니다.</sys:String>
+    <sys:String x:Key="Validation_NetworkSmoothingPositive">네트워크 이동 평균 샘플 수는 1 이상이어야 합니다.</sys:String>
+    <sys:String x:Key="Validation_SleepCooldownMinimum">절전 재시도 대기 시간은 10초 이상이어야 합니다.</sys:String>
+    <sys:String x:Key="Validation_DailyTimeFormat">매일 감시 시간대는 HH:mm 형식으로 입력해야 합니다.</sys:String>
+    <sys:String x:Key="Validation_WeeklyTimeFormat">{0} 감시 시간대는 HH:mm 형식으로 입력해야 합니다.</sys:String>
+    <sys:String x:Key="Validation_PollingIntervalPositive">모니터링 주기는 0보다 커야 합니다.</sys:String>
+
+    <sys:String x:Key="LiveStatus_InputCollecting">입력 유휴: 수집 중</sys:String>
+    <sys:String x:Key="LiveStatus_InputActive">입력 유휴 {0:F0}s / {1:F0}s</sys:String>
+    <sys:String x:Key="LiveStatus_InputInactive">입력 유휴 {0:F0}s (미감시)</sys:String>
+    <sys:String x:Key="LiveStatus_CpuActive">CPU {0:F1}% / {1:F1}% | 유휴 {2:F0}/{3:F0}s</sys:String>
+    <sys:String x:Key="LiveStatus_CpuInactive">CPU {0:F1}% (미감시)</sys:String>
+    <sys:String x:Key="LiveStatus_NetworkActive">네트워크 {0:F0}KB/s / {1:F0}KB/s | 유휴 {2:F0}/{3:F0}s</sys:String>
+    <sys:String x:Key="LiveStatus_NetworkInactive">네트워크 {0:F0}KB/s (미감시)</sys:String>
+    <sys:String x:Key="LiveStatus_Conditions">조건 {0}/{1}</sys:String>
+    <sys:String x:Key="LiveStatus_ConditionsDisabled">조건 비활성화</sys:String>
+
+    <sys:String x:Key="Status_DisplayPrefix">[상태] {0}</sys:String>
+    <sys:String x:Key="StatusKeyword_Sleep">절전</sys:String>
+    <sys:String x:Key="StatusKeyword_Request">요청</sys:String>
+    <sys:String x:Key="StatusKeyword_CPU">CPU</sys:String>
+    <sys:String x:Key="StatusKeyword_Network">네트워크</sys:String>
+
+    <sys:String x:Key="Status_NoConditions">활성화된 조건이 없습니다</sys:String>
+    <sys:String x:Key="Status_NextSchedule">감시 재개까지 {0:F0}초</sys:String>
+    <sys:String x:Key="Status_ActionNow">{0} 요청</sys:String>
+    <sys:String x:Key="Status_ActionIn">{0}까지 {1:F0}초</sys:String>
+    <sys:String x:Key="Status_CpuBlocking">CPU 사용률 {0:F1}%/{1:F1}%</sys:String>
+    <sys:String x:Key="Status_NetworkBlocking">네트워크 {0:F0}/{1:F0}KB/s</sys:String>
+
+    <sys:String x:Key="Notification_ActionSucceeded">{0} 명령 전송 (마지막 성공: {1})</sys:String>
+    <sys:String x:Key="Notification_ActionCancelled">{0} 실행 취소 (마지막 성공: {1})</sys:String>
+    <sys:String x:Key="Notification_ActionFailed">{0} 실행 실패 (오류 코드: {1}, 마지막 성공: {2})</sys:String>
+    <sys:String x:Key="Monitoring_LastSuccessUnknown">기록 없음</sys:String>
+
+    <sys:String x:Key="Gamepad_BalloonConnected">{0} 연결됨 (총 {1}개)</sys:String>
+    <sys:String x:Key="Gamepad_BalloonDisconnected">{0} 해제됨 (총 {1}개)</sys:String>
+    <sys:String x:Key="Gamepad_BalloonPrefix">게임패드: {0}</sys:String>
+
+    <sys:String x:Key="Tray_Menu_OpenSettings">설정 열기</sys:String>
+    <sys:String x:Key="Tray_Menu_Exit">종료</sys:String>
+
+    <sys:String x:Key="Tooltip_Title">SmartSleep</sys:String>
+    <sys:String x:Key="Tooltip_InputActive">입력 {0:F0}/{1:F0}s</sys:String>
+    <sys:String x:Key="Tooltip_InputInactive">입력 OFF {0:F0}s</sys:String>
+    <sys:String x:Key="Tooltip_CpuActive">CPU {0:F1}%/{1:F1}% {2:F0}/{3:F0}s</sys:String>
+    <sys:String x:Key="Tooltip_CpuInactive">CPU OFF {0:F1}%</sys:String>
+    <sys:String x:Key="Tooltip_NetworkActive">네트워크 {0:F0}/{1:F0}KB {2:F0}/{3:F0}s</sys:String>
+    <sys:String x:Key="Tooltip_NetworkInactive">네트워크 OFF {0:F0}KB</sys:String>
+    <sys:String x:Key="Tooltip_Conditions">조건 {0}/{1}</sys:String>
+
+    <sys:String x:Key="Confirmation_Title">SmartSleep 확인</sys:String>
+    <sys:String x:Key="Confirmation_Action_Sleep">절전 모드</sys:String>
+    <sys:String x:Key="Confirmation_Action_Shutdown">시스템 종료</sys:String>
+    <sys:String x:Key="Confirmation_Action_Default">전원 동작</sys:String>
+    <sys:String x:Key="Confirmation_Message">{0}초 후 {1}가 실행됩니다. 계속할까요?</sys:String>
+    <sys:String x:Key="Confirmation_CountdownLabel">남은 시간: {0}초</sys:String>
+    <sys:String x:Key="Confirmation_Cancel">취소</sys:String>
+    <sys:String x:Key="Confirmation_Execute">계속 실행</sys:String>
+
+    <sys:String x:Key="SleepLog_Action_Sleep">절전</sys:String>
+    <sys:String x:Key="SleepLog_Action_Shutdown">시스템 종료</sys:String>
+    <sys:String x:Key="SleepLog_Action_Power">전원</sys:String>
+    <sys:String x:Key="SleepLog_Status_Success">성공</sys:String>
+    <sys:String x:Key="SleepLog_Status_Failure">실패 ({0})</sys:String>
+    <sys:String x:Key="SleepLog_Status_FailureNoReason">실패</sys:String>
+    <sys:String x:Key="SleepLog_Format">{0} - {1} {2}</sys:String>
+</ResourceDictionary>

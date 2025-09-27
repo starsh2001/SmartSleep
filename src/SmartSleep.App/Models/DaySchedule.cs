@@ -4,8 +4,8 @@ namespace SmartSleep.App.Models;
 
 public class DaySchedule
 {
-    public bool Enabled { get; set; }
-    public bool AllDay { get; set; }
+    public bool Enabled { get; set; } = true;
+    public bool AllDay { get; set; } = true;
     public TimeSpan StartTime { get; set; } = TimeSpan.Zero;
     public TimeSpan EndTime { get; set; } = TimeSpan.Zero;
 

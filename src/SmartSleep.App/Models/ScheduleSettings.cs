@@ -7,8 +7,8 @@ public class ScheduleSettings
     public ScheduleMode Mode { get; set; } = ScheduleMode.Always;
 
     // Daily mode settings
-    public TimeSpan DailyStartTime { get; set; } = TimeSpan.Zero;
-    public TimeSpan DailyEndTime { get; set; } = TimeSpan.Zero;
+    public TimeSpan DailyStartTime { get; set; } = new(22, 0, 0); // 22:00
+    public TimeSpan DailyEndTime { get; set; } = new(6, 0, 0);    // 06:00
 
     // Weekly mode settings
     public DaySchedule Monday { get; set; } = DaySchedule.CreateDefault();
@@ -28,6 +28,7 @@ public class ScheduleSettings
             ScheduleMode.Always => true,
             ScheduleMode.Daily => IsWithinDailyWindow(now),
             ScheduleMode.Weekly => IsWithinWeeklyWindow(now),
+            ScheduleMode.Disabled => false,
             _ => true
         };
     }
