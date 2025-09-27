@@ -30,3 +30,6 @@ Desktop.ini
 # Backup files
 *.bak
 
+# Build artifacts
+build/publish/
+
