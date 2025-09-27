@@ -360,6 +360,13 @@ public class MonitoringService : IDisposable
             return "활성화된 조건 없음";
         }
 
+        var actionText = config.PowerAction switch
+        {
+            Models.PowerAction.Sleep => "절전",
+            Models.PowerAction.Shutdown => "시스템 종료",
+            _ => "전원"
+        };
+
         var nowLocal = nowUtc.ToLocalTime();
         var scheduleRemaining = GetScheduleRemainingSeconds(config.Schedule, nowLocal);
 
@@ -385,10 +392,10 @@ public class MonitoringService : IDisposable
             var remaining = Math.Max(scheduleRemaining, cooldownRemainingSeconds);
             if (remaining <= 0)
             {
-                return "절전 요청 중";
+                return $"{actionText} 요청 중";
             }
 
-            return $"예상 절전까지 {Math.Ceiling(remaining)}초";
+            return $"예상 {actionText}까지 {Math.Ceiling(remaining)}초";
         }
 
         bool cpuBlocksAll = config.Idle.UseCpuActivity && !cpuUsageOk &&
@@ -410,7 +417,7 @@ public class MonitoringService : IDisposable
         var totalRemaining = Math.Max(scheduleRemaining, conditionRemaining);
         totalRemaining = Math.Max(totalRemaining, cooldownRemainingSeconds);
 
-        return $"예상 절전까지 {Math.Ceiling(Math.Max(0, totalRemaining))}초";
+        return $"예상 {actionText}까지 {Math.Ceiling(Math.Max(0, totalRemaining))}초";
     }
 
     private double GetCooldownRemainingSeconds(DateTime nowUtc)
