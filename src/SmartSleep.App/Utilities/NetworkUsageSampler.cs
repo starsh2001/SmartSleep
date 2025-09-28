@@ -1,17 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Management;
 using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Utilities;
 
-public class NetworkUsageSampler
+public class NetworkUsageSampler : IDisposable
 {
     private readonly object _syncRoot = new();
     private readonly Queue<double> _window = new();
     private double _windowSum;
     private int _windowSize = DefaultValues.NetworkSmoothingWindow;
+    private PerformanceCounter? _bytesTotalCounter;
+    private bool _disposed;
     private string? _selectedInterface;
 
     public void SetWindowSize(int windowSize)
@@ -31,63 +33,82 @@ public class NetworkUsageSampler
 
     public double SampleKilobitsPerSecond()
     {
+        if (_disposed)
+            return GetAverage();
+
         lock (_syncRoot)
         {
             try
             {
-                if (_selectedInterface == null)
+                // Initialize counter on first use
+                if (_bytesTotalCounter == null)
                 {
-                    // Get available network interfaces from WMI
-                    using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_PerfFormattedData_Tcpip_NetworkInterface");
-                    using var results = searcher.Get();
-
-                    var interfaceNames = results
-                        .Cast<ManagementObject>()
-                        .Select(mo => mo["Name"]?.ToString())
-                        .Where(name => !string.IsNullOrEmpty(name))
-                        .ToArray();
-
-                    _selectedInterface = interfaceNames
-                        .Where(name => name != null &&
-                                      !name.Equals("Loopback Pseudo-Interface 1", StringComparison.OrdinalIgnoreCase) &&
-                                      !name.Contains("isatap") &&
-                                      !name.Contains("Teredo") &&
-                                      !name.Contains("UsbNcm") &&
-                                      !name.Contains("VPN") &&
-                                      !name.Contains("Virtual"))
-                        .OrderByDescending(name => name?.Contains("Ethernet") == true || name?.Contains("Realtek") == true || name?.Contains("Intel") == true)
-                        .FirstOrDefault();
-
                     if (_selectedInterface == null)
                     {
-                        return GetAverage();
+                        // Get available network interfaces from performance counters
+                        var category = new PerformanceCounterCategory("Network Interface");
+                        var instanceNames = category.GetInstanceNames();
+
+                        // Find the best interface, excluding system interfaces
+                        _selectedInterface = instanceNames
+                            .Where(name => !string.IsNullOrEmpty(name) &&
+                                          !name.Equals("_Total", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Equals("Loopback Pseudo-Interface 1", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Contains("isatap", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Contains("Teredo", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Contains("VPN", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Contains("Virtual", StringComparison.OrdinalIgnoreCase))
+                            .OrderByDescending(name => name.Contains("Ethernet", StringComparison.OrdinalIgnoreCase) ||
+                                                      name.Contains("Realtek", StringComparison.OrdinalIgnoreCase) ||
+                                                      name.Contains("Intel", StringComparison.OrdinalIgnoreCase))
+                            .FirstOrDefault();
+
+                        // Fallback to _Total if no specific interface found
+                        if (_selectedInterface == null)
+                        {
+                            _selectedInterface = "_Total";
+                        }
                     }
 
-                    return GetAverage();
+                    try
+                    {
+                        // Use "Bytes Total/sec" counter which matches Task Manager network usage
+                        _bytesTotalCounter = new PerformanceCounter("Network Interface", "Bytes Total/sec", _selectedInterface);
+
+                        // First call always returns 0, so call once and discard
+                        _bytesTotalCounter.NextValue();
+                        AddSample(0);
+                        return GetAverage();
+                    }
+                    catch
+                    {
+                        // Fallback to _Total if specific interface fails
+                        try
+                        {
+                            _selectedInterface = "_Total";
+                            _bytesTotalCounter = new PerformanceCounter("Network Interface", "Bytes Total/sec", "_Total");
+                            _bytesTotalCounter.NextValue();
+                            AddSample(0);
+                            return GetAverage();
+                        }
+                        catch
+                        {
+                            return GetAverage();
+                        }
+                    }
                 }
 
-                // Get network usage directly from WMI - same as Task Manager
-                using var usageSearcher = new ManagementObjectSearcher($"SELECT BytesTotalPerSec FROM Win32_PerfFormattedData_Tcpip_NetworkInterface WHERE Name='{_selectedInterface.Replace("'", "''")}'");
-                using var usageResults = usageSearcher.Get();
-
-                var networkUsage = usageResults
-                    .Cast<ManagementObject>()
-                    .FirstOrDefault()?
-                    .Properties["BytesTotalPerSec"]?
-                    .Value;
-
-                if (networkUsage == null)
-                {
-                    return GetAverage();
-                }
-
-                var bytesPerSecond = Convert.ToDouble(networkUsage);
+                var bytesPerSecond = _bytesTotalCounter.NextValue();
                 var kbps = (bytesPerSecond * 8) / 1000.0; // Convert bytes/sec to kbps
+
                 AddSample(Math.Max(0, kbps));
                 return GetAverage();
             }
             catch
             {
+                // Reset counter on error and return average
+                _bytesTotalCounter?.Dispose();
+                _bytesTotalCounter = null;
                 return GetAverage();
             }
         }
@@ -118,4 +139,16 @@ public class NetworkUsageSampler
         return _windowSum / _window.Count;
     }
 
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        lock (_syncRoot)
+        {
+            _bytesTotalCounter?.Dispose();
+            _bytesTotalCounter = null;
+            _disposed = true;
+        }
+    }
 }

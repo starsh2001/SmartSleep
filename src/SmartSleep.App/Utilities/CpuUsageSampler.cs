@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Management;
+using System.Diagnostics;
 using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Utilities;
 
-public class CpuUsageSampler
+public class CpuUsageSampler : IDisposable
 {
     private readonly object _syncRoot = new();
     private readonly Queue<double> _window = new();
     private double _windowSum;
     private int _windowSize = DefaultValues.CpuSmoothingWindow;
+    private PerformanceCounter? _cpuCounter;
+    private bool _disposed;
 
     public void SetWindowSize(int windowSize)
     {
@@ -30,61 +31,51 @@ public class CpuUsageSampler
 
     public double SampleCpuUsagePercentage()
     {
+        if (_disposed)
+            return GetAverage();
+
         lock (_syncRoot)
         {
             try
             {
-                // Use Task Manager equivalent: Processor Information Utility
-                double cpuValue = 0;
-
-                // First try: Processor Information % Processor Utility (Task Manager equivalent)
-                try
+                // Initialize counter on first use
+                if (_cpuCounter == null)
                 {
-                    using var searcher1 = new ManagementObjectSearcher("SELECT PercentProcessorUtility FROM Win32_PerfFormattedData_Counters_ProcessorInformation WHERE Name='_Total'");
-                    using var results1 = searcher1.Get();
-
-                    var processorUtility = results1
-                        .Cast<ManagementObject>()
-                        .FirstOrDefault()?
-                        .Properties["PercentProcessorUtility"]?
-                        .Value;
-
-                    if (processorUtility != null)
-                    {
-                        cpuValue = Convert.ToDouble(processorUtility);
-                    }
-                    else
-                    {
-                        throw new Exception("Processor Utility not available");
-                    }
-                }
-                catch
-                {
-                    // Fallback to standard PercentProcessorTime if Processor Information is not available
                     try
                     {
-                        using var searcher2 = new ManagementObjectSearcher("SELECT PercentProcessorTime FROM Win32_PerfFormattedData_PerfOS_Processor WHERE Name='_Total'");
-                        using var results2 = searcher2.Get();
-
-                        var cpuUsage = results2
-                            .Cast<ManagementObject>()
-                            .First()
-                            .Properties["PercentProcessorTime"]
-                            .Value;
-
-                        cpuValue = Convert.ToDouble(cpuUsage);
+                        // Try Processor Information Utility first (Task Manager equivalent)
+                        _cpuCounter = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+                        // First call always returns 0, so call it once and discard
+                        _cpuCounter.NextValue();
+                        AddSample(0);
+                        return GetAverage();
                     }
                     catch
                     {
-                        return GetAverage();
+                        // Fallback to standard Processor Time if Processor Information is not available
+                        try
+                        {
+                            _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                            _cpuCounter.NextValue();
+                            AddSample(0);
+                            return GetAverage();
+                        }
+                        catch
+                        {
+                            return GetAverage();
+                        }
                     }
                 }
 
+                var cpuValue = _cpuCounter.NextValue();
                 AddSample(Math.Clamp(cpuValue, 0, 100));
                 return GetAverage();
             }
             catch
             {
+                // Reset counter on error and return average
+                _cpuCounter?.Dispose();
+                _cpuCounter = null;
                 return GetAverage();
             }
         }
@@ -115,4 +106,16 @@ public class CpuUsageSampler
         return _windowSum / _window.Count;
     }
 
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        lock (_syncRoot)
+        {
+            _cpuCounter?.Dispose();
+            _cpuCounter = null;
+            _disposed = true;
+        }
+    }
 }

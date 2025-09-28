@@ -132,7 +132,7 @@ public static class LocalizationManager
         dictionary["App.AlreadyRunning"] = "SmartSleep is already running.";
         dictionary["App.NotInitialized"] = "The application has not finished initializing.";
 
-        dictionary["Settings_Title"] = "SmartSleep Settings";
+        dictionary["Settings_Title"] = $"{AppInfo.NameWithVersion} Settings";
         dictionary["Settings_Section_CurrentStatus"] = "Current Status";
         dictionary["Settings_Section_Monitoring"] = "Monitoring Criteria";
         dictionary["Settings_IdleTime"] = "Idle time required:";
@@ -233,7 +233,7 @@ public static class LocalizationManager
         dictionary["Tray_Menu_Exit"] = "Exit";
 
         // Tooltip
-        dictionary["Tooltip_Title"] = "SmartSleep";
+        dictionary["Tooltip_Title"] = AppInfo.NameWithVersion;
         dictionary["Tooltip_InputActive"] = "Input {0:F0}/{1:F0}s";
         dictionary["Tooltip_InputInactive"] = "Input OFF {0:F0}s";
         dictionary["Tooltip_CpuActive"] = "CPU {0:F1}%/{1:F1}% {2:F0}/{3:F0}s";
@@ -268,7 +268,7 @@ public static class LocalizationManager
         dictionary["App.AlreadyRunning"] = "SmartSleep이 이미 실행 중입니다.";
         dictionary["App.NotInitialized"] = "애플리케이션이 초기화되지 않았습니다.";
 
-        dictionary["Settings_Title"] = "SmartSleep 설정";
+        dictionary["Settings_Title"] = $"{AppInfo.NameWithVersion} 설정";
         dictionary["Settings_Section_CurrentStatus"] = "현재 상태";
         dictionary["Settings_Section_Monitoring"] = "모니터링 기준";
         dictionary["Settings_IdleTime"] = "유휴 시간 필요:";
@@ -369,7 +369,7 @@ public static class LocalizationManager
         dictionary["Tray_Menu_Exit"] = "종료";
 
         // Tooltip
-        dictionary["Tooltip_Title"] = "SmartSleep";
+        dictionary["Tooltip_Title"] = AppInfo.NameWithVersion;
         dictionary["Tooltip_InputActive"] = "입력 {0:F0}/{1:F0}s";
         dictionary["Tooltip_InputInactive"] = "입력 OFF {0:F0}s";
         dictionary["Tooltip_CpuActive"] = "CPU {0:F1}%/{1:F1}% {2:F0}/{3:F0}s";

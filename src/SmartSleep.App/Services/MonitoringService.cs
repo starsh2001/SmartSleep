@@ -727,6 +727,8 @@ public class MonitoringService : IDisposable
         InputActivityReader.GamepadConnectionChanged -= OnGamepadConnectionChanged;
         _cts?.Cancel();
         _cts?.Dispose();
+        _cpuSampler.Dispose();
+        _networkSampler.Dispose();
         InputActivityReader.Cleanup();
     }
 
