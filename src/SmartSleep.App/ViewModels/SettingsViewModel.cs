@@ -575,17 +575,17 @@ public class SettingsViewModel : ViewModelBase
 
     public Brush LiveInputBrush
     {
-        get => _lastSnapshot?.InputActivityDetected == true ? Brushes.Orange : Brushes.Black;
+        get => _lastSnapshot?.ScheduleActive == true && _lastSnapshot?.InputActivityDetected == true ? Brushes.Orange : Brushes.Black;
     }
 
     public Brush LiveCpuBrush
     {
-        get => _lastSnapshot?.CpuExceeding == true ? Brushes.Orange : Brushes.Black;
+        get => _lastSnapshot?.ScheduleActive == true && _lastSnapshot?.CpuExceeding == true ? Brushes.Orange : Brushes.Black;
     }
 
     public Brush LiveNetworkBrush
     {
-        get => _lastSnapshot?.NetworkExceeding == true ? Brushes.Orange : Brushes.Black;
+        get => _lastSnapshot?.ScheduleActive == true && _lastSnapshot?.NetworkExceeding == true ? Brushes.Orange : Brushes.Black;
     }
 
     public AppLanguage Language
@@ -924,7 +924,9 @@ public class SettingsViewModel : ViewModelBase
         }
         else
         {
-            LiveCpuStatus = LocalizationManager.Format("LiveStatus_CpuDisabled", snapshot.CpuUsagePercent);
+            LiveCpuStatus = snapshot.ScheduleActive
+                ? LocalizationManager.Format("LiveStatus_CpuDisabled", snapshot.CpuUsagePercent)
+                : LocalizationManager.Format("LiveStatus_Cpu", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent);
         }
 
         if (snapshot.NetworkMonitoringEnabled)
@@ -933,7 +935,9 @@ public class SettingsViewModel : ViewModelBase
         }
         else
         {
-            LiveNetworkStatus = LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobytesPerSecond);
+            LiveNetworkStatus = snapshot.ScheduleActive
+                ? LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobytesPerSecond)
+                : LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond);
         }
 
         // Conditions count display removed - no longer needed with real-time activity detection
@@ -944,6 +948,7 @@ public class SettingsViewModel : ViewModelBase
             snapshot.InputActivityDetected,
             snapshot.CpuExceeding,
             snapshot.NetworkExceeding,
+            snapshot.ScheduleActive,
             forTooltip: false);
 
         LiveStatusMessage = displayText;

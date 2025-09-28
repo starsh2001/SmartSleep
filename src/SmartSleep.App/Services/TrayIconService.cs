@@ -229,13 +229,19 @@ public class TrayIconService : IDisposable
 
         lines.Add(snapshot.CpuMonitoringEnabled
             ? (LocalizationManager.Format("LiveStatus_Cpu", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent),
-               StatusDisplayHelper.GetCpuBrush(snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent, forTooltip: true))
-            : (LocalizationManager.Format("LiveStatus_CpuDisabled", snapshot.CpuUsagePercent), Brushes.DimGray));
+               StatusDisplayHelper.GetCpuBrush(snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent, snapshot.ScheduleActive, forTooltip: true))
+            : (snapshot.ScheduleActive
+                ? LocalizationManager.Format("LiveStatus_CpuDisabled", snapshot.CpuUsagePercent)
+                : LocalizationManager.Format("LiveStatus_Cpu", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent),
+               Brushes.DimGray));
 
         lines.Add(snapshot.NetworkMonitoringEnabled
             ? (LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond),
-               StatusDisplayHelper.GetNetworkBrush(snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond, forTooltip: true))
-            : (LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobytesPerSecond), Brushes.DimGray));
+               StatusDisplayHelper.GetNetworkBrush(snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond, snapshot.ScheduleActive, forTooltip: true))
+            : (snapshot.ScheduleActive
+                ? LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobytesPerSecond)
+                : LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond),
+               Brushes.DimGray));
 
         // Conditions count display removed - no longer needed with real-time activity detection
 
@@ -247,6 +253,7 @@ public class TrayIconService : IDisposable
                 snapshot.InputActivityDetected,
                 snapshot.CpuExceeding,
                 snapshot.NetworkExceeding,
+                snapshot.ScheduleActive,
                 forTooltip: true);
 
             if (!string.IsNullOrWhiteSpace(statusText))

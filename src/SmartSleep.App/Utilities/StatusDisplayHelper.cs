@@ -24,16 +24,16 @@ public static class StatusDisplayHelper
         return (display, brush);
     }
 
-    public static System.Windows.Media.Brush GetCpuBrush(double usage, double threshold, bool forTooltip = false)
+    public static System.Windows.Media.Brush GetCpuBrush(double usage, double threshold, bool scheduleActive = true, bool forTooltip = false)
     {
         var normalBrush = forTooltip ? System.Windows.Media.Brushes.White : DefaultBrush;
-        return usage >= threshold ? WarningBrush : normalBrush;
+        return scheduleActive && usage >= threshold ? WarningBrush : normalBrush;
     }
 
-    public static System.Windows.Media.Brush GetNetworkBrush(double usage, double threshold, bool forTooltip = false)
+    public static System.Windows.Media.Brush GetNetworkBrush(double usage, double threshold, bool scheduleActive = true, bool forTooltip = false)
     {
         var normalBrush = forTooltip ? System.Windows.Media.Brushes.White : DefaultBrush;
-        return usage >= threshold ? WarningBrush : normalBrush;
+        return scheduleActive && usage >= threshold ? WarningBrush : normalBrush;
     }
 
     public static (string Text, System.Windows.Media.Brush Brush) GetStatusMessage(
@@ -41,16 +41,21 @@ public static class StatusDisplayHelper
         bool inputActivityDetected,
         bool cpuExceeding,
         bool networkExceeding,
+        bool scheduleActive = true,
         bool forTooltip = false)
     {
-        // Check if this is an alert message (activity detection or threshold exceeded)
-        var activityDetectedMsg = LocalizationManager.GetString("Status_ActivityDetected");
-        var cpuExceededMsg = LocalizationManager.GetString("Status_CpuExceeded");
-        var networkExceededMsg = LocalizationManager.GetString("Status_NetworkExceeded");
-
-        if (statusMessage == activityDetectedMsg || statusMessage == cpuExceededMsg || statusMessage == networkExceededMsg)
+        // Only apply special coloring when schedule is active
+        if (scheduleActive)
         {
-            return (statusMessage, WarningBrush);
+            // Check if this is an alert message (activity detection or threshold exceeded)
+            var activityDetectedMsg = LocalizationManager.GetString("Status_ActivityDetected");
+            var cpuExceededMsg = LocalizationManager.GetString("Status_CpuExceeded");
+            var networkExceededMsg = LocalizationManager.GetString("Status_NetworkExceeded");
+
+            if (statusMessage == activityDetectedMsg || statusMessage == cpuExceededMsg || statusMessage == networkExceededMsg)
+            {
+                return (statusMessage, WarningBrush);
+            }
         }
 
         // Normal status - use default formatting

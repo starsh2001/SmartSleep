@@ -149,69 +149,77 @@ public class MonitoringService : IDisposable
                 inputActivityDetected = false;
             }
 
-            // Detect state changes and update message accordingly
+            // Detect state changes and update message accordingly (only when schedule is active)
             var cpuExceeding = snapshotConfig.Idle.UseCpuActivity && !cpuUsageOk;
             var networkExceeding = snapshotConfig.Idle.UseNetworkActivity && !networkUsageOk;
 
-            if (inputActivityDetected && !_previousInputActivityDetected)
+            if (scheduleActive)
             {
-                _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_ActivityDetected");
-            }
-            else if (cpuExceeding && !_previousCpuExceeding)
-            {
-                _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_CpuExceeded");
-            }
-            else if (networkExceeding && !_previousNetworkExceeding)
-            {
-                _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
-            }
-            else if (!inputActivityDetected && _previousInputActivityDetected)
-            {
-                // Input activity stopped, check if other conditions are still active
-                if (cpuExceeding)
-                {
-                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_CpuExceeded");
-                }
-                else if (networkExceeding)
-                {
-                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
-                }
-                else
-                {
-                    _lastChangeBasedStatusMessage = null;
-                }
-            }
-            else if (!cpuExceeding && _previousCpuExceeding)
-            {
-                // CPU activity stopped, check if other conditions are still active
-                if (inputActivityDetected)
+                if (inputActivityDetected && !_previousInputActivityDetected)
                 {
                     _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_ActivityDetected");
                 }
-                else if (networkExceeding)
-                {
-                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
-                }
-                else
-                {
-                    _lastChangeBasedStatusMessage = null;
-                }
-            }
-            else if (!networkExceeding && _previousNetworkExceeding)
-            {
-                // Network activity stopped, check if other conditions are still active
-                if (inputActivityDetected)
-                {
-                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_ActivityDetected");
-                }
-                else if (cpuExceeding)
+                else if (cpuExceeding && !_previousCpuExceeding)
                 {
                     _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_CpuExceeded");
                 }
-                else
+                else if (networkExceeding && !_previousNetworkExceeding)
                 {
-                    _lastChangeBasedStatusMessage = null;
+                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
                 }
+                else if (!inputActivityDetected && _previousInputActivityDetected)
+                {
+                    // Input activity stopped, check if other conditions are still active
+                    if (cpuExceeding)
+                    {
+                        _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_CpuExceeded");
+                    }
+                    else if (networkExceeding)
+                    {
+                        _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
+                    }
+                    else
+                    {
+                        _lastChangeBasedStatusMessage = null;
+                    }
+                }
+                else if (!cpuExceeding && _previousCpuExceeding)
+                {
+                    // CPU activity stopped, check if other conditions are still active
+                    if (inputActivityDetected)
+                    {
+                        _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_ActivityDetected");
+                    }
+                    else if (networkExceeding)
+                    {
+                        _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
+                    }
+                    else
+                    {
+                        _lastChangeBasedStatusMessage = null;
+                    }
+                }
+                else if (!networkExceeding && _previousNetworkExceeding)
+                {
+                    // Network activity stopped, check if other conditions are still active
+                    if (inputActivityDetected)
+                    {
+                        _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_ActivityDetected");
+                    }
+                    else if (cpuExceeding)
+                    {
+                        _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_CpuExceeded");
+                    }
+                    else
+                    {
+                        _lastChangeBasedStatusMessage = null;
+                    }
+                }
+            }
+            else
+            {
+                // Schedule not active, clear any existing change-based status message
+                _lastChangeBasedStatusMessage = null;
             }
 
             _previousInputActivityDetected = inputActivityDetected;
