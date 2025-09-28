@@ -30,4 +30,9 @@ public class MonitoringSnapshot
     public bool ScheduleActive { get; init; }
     public bool ConditionsMet { get; init; }
     public string StatusMessage { get; init; } = string.Empty;
+
+    // Alert states for consistent display
+    public bool InputActivityDetected { get; init; }
+    public bool CpuExceeding { get; init; }
+    public bool NetworkExceeding { get; init; }
 }

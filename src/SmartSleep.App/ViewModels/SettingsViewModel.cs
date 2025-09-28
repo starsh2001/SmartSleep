@@ -12,8 +12,6 @@ namespace SmartSleep.App.ViewModels;
 
 public class SettingsViewModel : ViewModelBase
 {
-    private static bool _inputMonitoringInitialized = false;
-    private static readonly object _initLock = new object();
 
     private bool _useInputActivity;
     private bool _includeGamepadInput = true;
@@ -28,13 +26,6 @@ public class SettingsViewModel : ViewModelBase
     private int _idleTimeSeconds = 1200;
     private int _pollingIntervalSeconds;
 
-    // Activity indicators
-    private bool _inputActivityDetected = false;
-    private bool _cpuActivityDetected = false;
-    private bool _networkActivityDetected = false;
-    private DispatcherTimer? _inputActivityTimer;
-    private DispatcherTimer? _cpuActivityTimer;
-    private DispatcherTimer? _networkActivityTimer;
     private MonitoringSnapshot? _previousSnapshot;
     // Schedule mode
     private ScheduleMode _scheduleMode = ScheduleMode.Always;
@@ -584,17 +575,17 @@ public class SettingsViewModel : ViewModelBase
 
     public Brush LiveInputBrush
     {
-        get => _inputActivityDetected ? Brushes.Orange : Brushes.Black;
+        get => _lastSnapshot?.InputActivityDetected == true ? Brushes.Orange : Brushes.Black;
     }
 
     public Brush LiveCpuBrush
     {
-        get => _cpuActivityDetected ? Brushes.Orange : Brushes.Black;
+        get => _lastSnapshot?.CpuExceeding == true ? Brushes.Orange : Brushes.Black;
     }
 
     public Brush LiveNetworkBrush
     {
-        get => _networkActivityDetected ? Brushes.Orange : Brushes.Black;
+        get => _lastSnapshot?.NetworkExceeding == true ? Brushes.Orange : Brushes.Black;
     }
 
     public AppLanguage Language
@@ -903,20 +894,6 @@ public class SettingsViewModel : ViewModelBase
 
     public void RefreshLiveStatus()
     {
-        // Initialize input monitoring once
-        if (!_inputMonitoringInitialized)
-        {
-            lock (_initLock)
-            {
-                if (!_inputMonitoringInitialized)
-                {
-                    Utilities.InputActivityReader.InputActivityDetected += OnInputActivityDetected;
-                    Utilities.InputActivityReader.StartInputMonitoring();
-                    _inputMonitoringInitialized = true;
-                }
-            }
-        }
-
         if (_lastSnapshot == null)
         {
             LiveInputStatus = LocalizationManager.GetString("LiveStatus_InputWaiting");
@@ -929,13 +906,10 @@ public class SettingsViewModel : ViewModelBase
 
         var snapshot = _lastSnapshot;
 
-        // Detect activity changes
-        DetectActivityChanges(snapshot);
-
         // Update individual status lines (simplified format without numbers)
         if (snapshot.InputMonitoringEnabled)
         {
-            LiveInputStatus = _inputActivityDetected
+            LiveInputStatus = snapshot.InputActivityDetected
                 ? LocalizationManager.GetString("LiveStatus_InputActive") // "입력: 활동 감지됨"
                 : LocalizationManager.GetString("LiveStatus_InputWaiting"); // "입력: 대기중"
         }
@@ -964,15 +938,12 @@ public class SettingsViewModel : ViewModelBase
 
         // Conditions count display removed - no longer needed with real-time activity detection
 
-        // Main status message - use unified status logic
-        bool cpuExceeding = snapshot.CpuMonitoringEnabled && snapshot.CpuUsagePercent >= snapshot.CpuThresholdPercent;
-        bool networkExceeding = snapshot.NetworkMonitoringEnabled && snapshot.NetworkKilobytesPerSecond >= snapshot.NetworkThresholdKilobytesPerSecond;
-
+        // Main status message - already contains the last-changed message from MonitoringService
         var (displayText, brush) = StatusDisplayHelper.GetStatusMessage(
             snapshot.StatusMessage,
-            _inputActivityDetected,
-            cpuExceeding,
-            networkExceeding,
+            snapshot.InputActivityDetected,
+            snapshot.CpuExceeding,
+            snapshot.NetworkExceeding,
             forTooltip: false);
 
         LiveStatusMessage = displayText;
@@ -986,57 +957,6 @@ public class SettingsViewModel : ViewModelBase
         _previousSnapshot = snapshot;
     }
 
-    private void OnInputActivityDetected(object? sender, EventArgs e)
-    {
-        _inputActivityDetected = true;
-        _inputActivityTimer?.Stop();
-        _inputActivityTimer = StartActivityTimer(() => _inputActivityDetected = false);
-        RefreshLiveStatus(); // Update UI immediately
-    }
 
-    private void DetectActivityChanges(MonitoringSnapshot snapshot)
-    {
-        // Input activity detection is now handled by event from InputActivityReader
-
-        // Detect CPU activity (when usage exceeds threshold)
-        if (snapshot.CpuMonitoringEnabled)
-        {
-            bool cpuActive = snapshot.CpuUsagePercent > snapshot.CpuThresholdPercent;
-            if (cpuActive)
-            {
-                _cpuActivityDetected = true;
-                _cpuActivityTimer?.Stop();
-                _cpuActivityTimer = StartActivityTimer(() => _cpuActivityDetected = false);
-            }
-        }
-
-        // Detect network activity (when usage exceeds threshold)
-        if (snapshot.NetworkMonitoringEnabled)
-        {
-            bool networkActive = snapshot.NetworkKilobytesPerSecond > snapshot.NetworkThresholdKilobytesPerSecond;
-            if (networkActive)
-            {
-                _networkActivityDetected = true;
-                _networkActivityTimer?.Stop();
-                _networkActivityTimer = StartActivityTimer(() => _networkActivityDetected = false);
-            }
-        }
-    }
-
-    private DispatcherTimer StartActivityTimer(Action onComplete)
-    {
-        var timer = new DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(500)
-        };
-        timer.Tick += (_, _) =>
-        {
-            timer.Stop();
-            onComplete();
-            RefreshLiveStatus(); // Refresh to update colors
-        };
-        timer.Start();
-        return timer;
-    }
 
 }

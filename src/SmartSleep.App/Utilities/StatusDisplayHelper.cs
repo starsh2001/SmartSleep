@@ -37,30 +37,24 @@ public static class StatusDisplayHelper
     }
 
     public static (string Text, System.Windows.Media.Brush Brush) GetStatusMessage(
-        string? originalStatusMessage,
+        string? statusMessage,
         bool inputActivityDetected,
         bool cpuExceeding,
         bool networkExceeding,
         bool forTooltip = false)
     {
-        // Priority: Input > CPU > Network > Original
-        if (inputActivityDetected)
+        // Check if this is an alert message (activity detection or threshold exceeded)
+        var activityDetectedMsg = LocalizationManager.GetString("Status_ActivityDetected");
+        var cpuExceededMsg = LocalizationManager.GetString("Status_CpuExceeded");
+        var networkExceededMsg = LocalizationManager.GetString("Status_NetworkExceeded");
+
+        if (statusMessage == activityDetectedMsg || statusMessage == cpuExceededMsg || statusMessage == networkExceededMsg)
         {
-            return (LocalizationManager.GetString("Status_ActivityDetected"), WarningBrush);
+            return (statusMessage, WarningBrush);
         }
-        else if (cpuExceeding)
-        {
-            return (LocalizationManager.GetString("Status_CpuExceeded"), WarningBrush);
-        }
-        else if (networkExceeding)
-        {
-            return (LocalizationManager.GetString("Status_NetworkExceeded"), WarningBrush);
-        }
-        else
-        {
-            // Normal status - use default formatting
-            return FormatStatus(originalStatusMessage, forTooltip);
-        }
+
+        // Normal status - use default formatting
+        return FormatStatus(statusMessage, forTooltip);
     }
 
     private static System.Windows.Media.Brush DetermineBrush(string message, bool forTooltip = false)

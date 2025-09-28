@@ -200,9 +200,9 @@ public static class LocalizationManager
         dictionary["LiveStatus_CpuDisabled"] = "CPU {0:F1}% (disabled)";
         dictionary["LiveStatus_Network"] = "Network {0:F0}KB/s / {1:F0}KB/s";
         dictionary["LiveStatus_NetworkDisabled"] = "Network {0:F0}KB/s (disabled)";
-        dictionary["Status_ActivityDetected"] = "Activity detected";
-        dictionary["Status_CpuExceeded"] = "CPU usage exceeded";
-        dictionary["Status_NetworkExceeded"] = "Network usage exceeded";
+        dictionary["Status_ActivityDetected"] = "[Status] Activity detected";
+        dictionary["Status_CpuExceeded"] = "[Status] CPU usage exceeded";
+        dictionary["Status_NetworkExceeded"] = "[Status] Network usage exceeded";
         dictionary["Detail_Input"] = "Input";
         dictionary["Detail_InputActive"] = "Input activity";
         dictionary["Detail_Cpu"] = "CPU";
@@ -336,9 +336,9 @@ public static class LocalizationManager
         dictionary["LiveStatus_CpuDisabled"] = "CPU {0:F1}% (비활성화)";
         dictionary["LiveStatus_Network"] = "네트워크 {0:F0}KB/s / {1:F0}KB/s";
         dictionary["LiveStatus_NetworkDisabled"] = "네트워크 {0:F0}KB/s (비활성화)";
-        dictionary["Status_ActivityDetected"] = "활동 감지됨";
-        dictionary["Status_CpuExceeded"] = "CPU 사용량 초과";
-        dictionary["Status_NetworkExceeded"] = "네트워크 사용량 초과";
+        dictionary["Status_ActivityDetected"] = "[상태] 활동 감지됨";
+        dictionary["Status_CpuExceeded"] = "[상태] CPU 사용량 초과";
+        dictionary["Status_NetworkExceeded"] = "[상태] 네트워크 사용량 초과";
         dictionary["Detail_Input"] = "입력";
         dictionary["Detail_InputActive"] = "입력 활동";
         dictionary["Detail_Cpu"] = "CPU";

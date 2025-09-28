@@ -30,8 +30,6 @@ public class TrayIconService : IDisposable
     private DispatcherTimer? _mouseLeaveCheckTimer;
     private bool _systemTooltipSuppressed;
     private MonitoringSnapshot? _lastSnapshot;
-    private bool _inputActivityDetected = false;
-    private DispatcherTimer? _inputActivityTimer;
     private string _lastTooltipContent = string.Empty;
     private System.Drawing.Point _lastMousePosition = System.Drawing.Point.Empty;
 
@@ -66,8 +64,6 @@ public class TrayIconService : IDisposable
         _notifyIcon.MouseDown += NotifyIconOnMouseDown;
 
         // Subscribe to input activity events
-        Utilities.InputActivityReader.InputActivityDetected += OnInputActivityDetected;
-        Utilities.InputActivityReader.StartInputMonitoring();
 
         // Initialize tooltip window immediately
         InitializeTooltipWindow();
@@ -167,34 +163,6 @@ public class TrayIconService : IDisposable
         _dispatcher.BeginInvoke(HideTooltipWindow);
     }
 
-    private void OnInputActivityDetected(object? sender, EventArgs e)
-    {
-        _dispatcher.BeginInvoke(() =>
-        {
-            _inputActivityDetected = true;
-            _inputActivityTimer?.Stop();
-            _inputActivityTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromMilliseconds(500)
-            };
-            _inputActivityTimer.Tick += (_, _) =>
-            {
-                _inputActivityTimer.Stop();
-                _inputActivityDetected = false;
-                // Only update tooltip if it's currently visible to prevent flickering
-                if (_tooltipWindow?.IsVisible == true)
-                {
-                    UpdateTooltipWindow();
-                }
-            };
-            _inputActivityTimer.Start();
-            // Update tooltip content if visible (without hiding/showing)
-            if (_tooltipWindow?.ShouldRender == true)
-            {
-                UpdateTooltipWindow();
-            }
-        });
-    }
 
     private void ShowSettings()
     {
@@ -248,10 +216,10 @@ public class TrayIconService : IDisposable
 
         if (snapshot.InputMonitoringEnabled)
         {
-            var inputText = _inputActivityDetected
+            var inputText = snapshot.InputActivityDetected
                 ? LocalizationManager.GetString("LiveStatus_InputActive") // "입력: 활동 감지됨"
                 : LocalizationManager.GetString("LiveStatus_InputWaiting"); // "입력: 대기중"
-            var inputBrush = _inputActivityDetected ? Brushes.Orange : Brushes.White;
+            var inputBrush = snapshot.InputActivityDetected ? Brushes.Orange : Brushes.White;
             lines.Add((inputText, inputBrush));
         }
         else
@@ -273,16 +241,12 @@ public class TrayIconService : IDisposable
 
         if (!string.IsNullOrWhiteSpace(snapshot.StatusMessage))
         {
-            // Use unified status logic
-            bool inputActivity = _inputActivityDetected;
-            bool cpuExceeding = snapshot.CpuMonitoringEnabled && snapshot.CpuUsagePercent >= snapshot.CpuThresholdPercent;
-            bool networkExceeding = snapshot.NetworkMonitoringEnabled && snapshot.NetworkKilobytesPerSecond >= snapshot.NetworkThresholdKilobytesPerSecond;
-
+            // StatusMessage already contains the last-changed message from MonitoringService
             var (statusText, statusBrush) = StatusDisplayHelper.GetStatusMessage(
                 snapshot.StatusMessage,
-                inputActivity,
-                cpuExceeding,
-                networkExceeding,
+                snapshot.InputActivityDetected,
+                snapshot.CpuExceeding,
+                snapshot.NetworkExceeding,
                 forTooltip: true);
 
             if (!string.IsNullOrWhiteSpace(statusText))
@@ -503,7 +467,6 @@ public class TrayIconService : IDisposable
     {
         _monitoringService.SnapshotAvailable -= MonitoringServiceOnSnapshotAvailable;
         _monitoringService.SleepTriggered -= MonitoringServiceOnSleepTriggered;
-        Utilities.InputActivityReader.InputActivityDetected -= OnInputActivityDetected;
 
         if (_notifyIcon != null)
         {
@@ -521,8 +484,6 @@ public class TrayIconService : IDisposable
         _tooltipHideTimer = null;
         _mouseLeaveCheckTimer?.Stop();
         _mouseLeaveCheckTimer = null;
-        _inputActivityTimer?.Stop();
-        _inputActivityTimer = null;
 
         _iconResource?.Dispose();
         _iconResource = null;

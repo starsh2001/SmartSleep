@@ -22,6 +22,10 @@ public class MonitoringService : IDisposable
     private DateTime _lastSleepAttemptUtc = DateTime.MinValue;
     private DateTime? _lastSleepSuccessUtc;
     private TimeSpan _sleepCooldown = TimeSpan.FromSeconds(45);
+    private bool _previousInputActivityDetected;
+    private bool _previousCpuExceeding;
+    private bool _previousNetworkExceeding;
+    private string? _lastChangeBasedStatusMessage;
 
     public event EventHandler<MonitoringSnapshot>? SnapshotAvailable;
     public event EventHandler<string>? SleepTriggered;
@@ -145,11 +149,36 @@ public class MonitoringService : IDisposable
                 inputActivityDetected = false;
             }
 
+            // Detect state changes and update message accordingly
+            var cpuExceeding = snapshotConfig.Idle.UseCpuActivity && !cpuUsageOk;
+            var networkExceeding = snapshotConfig.Idle.UseNetworkActivity && !networkUsageOk;
+
+            if (inputActivityDetected && !_previousInputActivityDetected)
+            {
+                _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_ActivityDetected");
+            }
+            else if (cpuExceeding && !_previousCpuExceeding)
+            {
+                _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_CpuExceeded");
+            }
+            else if (networkExceeding && !_previousNetworkExceeding)
+            {
+                _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
+            }
+            else if (!inputActivityDetected && !cpuExceeding && !networkExceeding &&
+                     (_previousInputActivityDetected || _previousCpuExceeding || _previousNetworkExceeding))
+            {
+                // All conditions cleared, reset to original status message
+                _lastChangeBasedStatusMessage = null;
+            }
+
+            _previousInputActivityDetected = inputActivityDetected;
+            _previousCpuExceeding = cpuExceeding;
+            _previousNetworkExceeding = networkExceeding;
+
             var shouldPropagateReset =
                 scheduleActive &&
-                (inputActivityDetected ||
-                 (snapshotConfig.Idle.UseCpuActivity && !cpuUsageOk) ||
-                 (snapshotConfig.Idle.UseNetworkActivity && !networkUsageOk));
+                (inputActivityDetected || cpuExceeding || networkExceeding);
 
             if (!scheduleActive || shouldPropagateReset)
             {
@@ -175,7 +204,7 @@ public class MonitoringService : IDisposable
 
             var cooldownRemainingSeconds = GetCooldownRemainingSeconds(nowUtc);
 
-            var statusMessage = DetermineStatusMessage(snapshotConfig,
+            var statusMessage = _lastChangeBasedStatusMessage ?? DetermineStatusMessage(snapshotConfig,
                 nowUtc,
                 scheduleActive,
                 inputIdle,
@@ -227,7 +256,10 @@ public class MonitoringService : IDisposable
                 SatisfiedConditionCount = satisfiedCount,
                 ScheduleActive = scheduleActive,
                 ConditionsMet = conditionsMet,
-                StatusMessage = statusMessage
+                StatusMessage = statusMessage,
+                InputActivityDetected = inputActivityDetected,
+                CpuExceeding = cpuExceeding,
+                NetworkExceeding = networkExceeding
             };
 
             LastSnapshot = snapshot;
