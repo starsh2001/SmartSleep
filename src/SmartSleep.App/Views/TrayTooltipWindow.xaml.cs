@@ -9,13 +9,36 @@ namespace SmartSleep.App.Views;
 
 public partial class TrayTooltipWindow : Window
 {
+    private bool _updatesFrozen = false;
+    private bool _shouldRender = true;
+
     public TrayTooltipWindow()
     {
         InitializeComponent();
+        // Don't set visibility here - let the service handle it
     }
+
+    public void FreezeUpdates(bool freeze)
+    {
+        _updatesFrozen = freeze;
+    }
+
+    public void SetShouldRender(bool shouldRender)
+    {
+        _shouldRender = shouldRender;
+        Visibility = shouldRender ? Visibility.Visible : Visibility.Hidden;
+        System.Diagnostics.Debug.WriteLine($"Tooltip visibility set to: {(shouldRender ? "Visible" : "Hidden")}");
+    }
+
+    public bool ShouldRender => _shouldRender;
 
     public void UpdateLines(IReadOnlyList<(string Text, Brush Brush)> lines)
     {
+        if (_updatesFrozen)
+        {
+            return;
+        }
+
         ContentBlock.Inlines.Clear();
         if (lines.Count == 0)
         {
@@ -35,7 +58,5 @@ public partial class TrayTooltipWindow : Window
             }
         }
 
-        ContentBlock.UpdateLayout();
-        UpdateLayout();
     }
 }

@@ -27,12 +27,13 @@ public class TrayIconService : IDisposable
     private System.Drawing.Icon? _iconResource;
     private TrayTooltipWindow? _tooltipWindow;
     private DispatcherTimer? _tooltipHideTimer;
+    private DispatcherTimer? _mouseLeaveCheckTimer;
     private bool _systemTooltipSuppressed;
     private MonitoringSnapshot? _lastSnapshot;
     private bool _inputActivityDetected = false;
     private DispatcherTimer? _inputActivityTimer;
     private string _lastTooltipContent = string.Empty;
-    private DispatcherTimer? _mouseLeaveCheckTimer;
+    private System.Drawing.Point _lastMousePosition = System.Drawing.Point.Empty;
 
     public TrayIconService(MonitoringService monitoringService,
                            Func<SettingsWindow> settingsWindowFactory,
@@ -67,6 +68,9 @@ public class TrayIconService : IDisposable
         // Subscribe to input activity events
         Utilities.InputActivityReader.InputActivityDetected += OnInputActivityDetected;
         Utilities.InputActivityReader.StartInputMonitoring();
+
+        // Initialize tooltip window immediately
+        InitializeTooltipWindow();
 
         EnsureSystemTooltipSuppressed(force: true);
     }
@@ -104,11 +108,9 @@ public class TrayIconService : IDisposable
 
         _dispatcher.BeginInvoke(() =>
         {
-            // No need to check or set tooltip text since we're completely suppressing tooltips
-
             EnsureSystemTooltipSuppressed();
-            // Update tooltip content if visible (without hiding/showing)
-            if (_tooltipWindow?.IsVisible == true)
+
+            if (_tooltipWindow?.ShouldRender == true)
             {
                 UpdateTooltipWindow();
             }
@@ -139,19 +141,23 @@ public class TrayIconService : IDisposable
 
     private void NotifyIconOnMouseMove(object? sender, Forms.MouseEventArgs e)
     {
-        if (_lastSnapshot == null)
+        if (_lastSnapshot == null || _tooltipWindow == null)
         {
             return;
         }
 
+        var currentMousePos = Forms.Control.MousePosition;
+
         _dispatcher.BeginInvoke(() =>
         {
-            if (_lastSnapshot == null)
+            if (_lastSnapshot == null || _tooltipWindow == null)
             {
                 return;
             }
 
-            EnsureTooltipWindow();
+            // Update last mouse position
+            _lastMousePosition = currentMousePos;
+
             ShowTooltipWindow();
         });
     }
@@ -183,7 +189,7 @@ public class TrayIconService : IDisposable
             };
             _inputActivityTimer.Start();
             // Update tooltip content if visible (without hiding/showing)
-            if (_tooltipWindow?.IsVisible == true)
+            if (_tooltipWindow?.ShouldRender == true)
             {
                 UpdateTooltipWindow();
             }
@@ -290,26 +296,34 @@ public class TrayIconService : IDisposable
         return lines;
     }
 
-    private void EnsureTooltipWindow()
+    private void InitializeTooltipWindow()
     {
         if (_tooltipWindow != null)
         {
             return;
         }
 
+        System.Diagnostics.Debug.WriteLine("Initializing tooltip window");
         _tooltipWindow = new TrayTooltipWindow();
+
+        // Show the window initially, then hide it
+        _tooltipWindow.Show();
+        _tooltipWindow.SetShouldRender(false);
+
         _tooltipHideTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(2000) // 2 seconds instead of 200ms
+            Interval = TimeSpan.FromMilliseconds(2000)
         };
         _tooltipHideTimer.Tick += (_, _) => HideTooltipWindow();
 
         // Timer to check if mouse left the tray area
         _mouseLeaveCheckTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(100) // Check every 100ms
+            Interval = TimeSpan.FromMilliseconds(200) // Check every 200ms to reduce flicker
         };
         _mouseLeaveCheckTimer.Tick += CheckMouseLeave;
+
+        System.Diagnostics.Debug.WriteLine("Tooltip window initialized and hidden");
     }
 
     private void ShowTooltipWindow()
@@ -323,20 +337,15 @@ public class TrayIconService : IDisposable
         var currentContent = string.Join("\n", lines.Select(l => l.Text));
         _tooltipWindow.UpdateLines(lines);
         _lastTooltipContent = currentContent;
+
         PositionTooltipWindow();
+        _tooltipWindow.SetShouldRender(true);
 
-        if (!_tooltipWindow.IsVisible)
-        {
-            _tooltipWindow.Show();
-            _tooltipWindow.UpdateLayout();
-            PositionTooltipWindow();
-        }
-
-        // Stop the 2-second timer while mouse is over icon
+        // Reset the hide timer - hide after 2 seconds if no more mouse movement
         _tooltipHideTimer?.Stop();
+        _tooltipHideTimer?.Start();
 
-        // Start checking for mouse leave
-        _mouseLeaveCheckTimer?.Stop();
+        // Start checking if mouse leaves the tray area
         _mouseLeaveCheckTimer?.Start();
     }
 
@@ -349,10 +358,6 @@ public class TrayIconService : IDisposable
 
         var cursor = Forms.Control.MousePosition;
 
-        if (double.IsNaN(_tooltipWindow.Width) || double.IsNaN(_tooltipWindow.Height))
-        {
-            _tooltipWindow.UpdateLayout();
-        }
 
         var workingArea = SystemParameters.WorkArea;
         _tooltipWindow.Left = cursor.X + 12;
@@ -369,7 +374,7 @@ public class TrayIconService : IDisposable
 
     private void UpdateTooltipWindow()
     {
-        if (_tooltipWindow == null || _lastSnapshot == null || !_tooltipWindow.IsVisible)
+        if (_tooltipWindow == null || _lastSnapshot == null || !_tooltipWindow.ShouldRender)
         {
             return;
         }
@@ -386,13 +391,32 @@ public class TrayIconService : IDisposable
     }
 
 
+
+
     private void CheckMouseLeave(object? sender, EventArgs e)
     {
-        if (_tooltipWindow == null || !_tooltipWindow.IsVisible || _notifyIcon == null)
+        var currentMousePos = Forms.Control.MousePosition;
+
+        // Only check if mouse position has changed to reduce unnecessary API calls
+        if (currentMousePos == _lastMousePosition)
         {
+            // Mouse hasn't moved, stop the timer to prevent flickering
             _mouseLeaveCheckTimer?.Stop();
             return;
         }
+
+        _lastMousePosition = currentMousePos;
+
+        if (!IsMouseOverIcon())
+        {
+            HideTooltipWindow();
+        }
+    }
+
+    private bool IsMouseOverIcon()
+    {
+        if (_notifyIcon == null)
+            return false;
 
         try
         {
@@ -409,17 +433,7 @@ public class TrayIconService : IDisposable
                     iconRect.Height + 10
                 );
 
-                // If mouse is not in the padded icon area, hide tooltip immediately
-                if (!paddedRect.Contains(mousePos))
-                {
-                    _mouseLeaveCheckTimer?.Stop();
-                    HideTooltipWindow();
-                }
-                else
-                {
-                    // Mouse is still in icon area - keep 2-second timer stopped
-                    _tooltipHideTimer?.Stop();
-                }
+                return paddedRect.Contains(mousePos);
             }
             else
             {
@@ -429,27 +443,18 @@ public class TrayIconService : IDisposable
                 var screenWidth = SystemParameters.PrimaryScreenWidth;
 
                 var trayArea = new System.Drawing.Rectangle(
-                    (int)(screenWidth - 100), // Smaller area for fallback
+                    (int)(screenWidth - 100),
                     (int)(workingArea.Bottom),
                     100,
                     (int)(screenHeight - workingArea.Bottom)
                 );
 
-                if (!trayArea.Contains(mousePos))
-                {
-                    _mouseLeaveCheckTimer?.Stop();
-                    HideTooltipWindow();
-                }
-                else
-                {
-                    // Mouse is still in tray area - keep 2-second timer stopped
-                    _tooltipHideTimer?.Stop();
-                }
+                return trayArea.Contains(mousePos);
             }
         }
         catch
         {
-            // If we can't detect mouse position, fall back to normal timer behavior
+            return false;
         }
     }
 
@@ -458,9 +463,9 @@ public class TrayIconService : IDisposable
         _tooltipHideTimer?.Stop();
         _mouseLeaveCheckTimer?.Stop();
 
-        if (_tooltipWindow is { IsVisible: true })
+        if (_tooltipWindow?.ShouldRender == true)
         {
-            _tooltipWindow.Hide();
+            _tooltipWindow.SetShouldRender(false);
         }
     }
 
@@ -501,6 +506,7 @@ public class TrayIconService : IDisposable
         _monitoringService.SnapshotAvailable -= MonitoringServiceOnSnapshotAvailable;
         _monitoringService.SleepTriggered -= MonitoringServiceOnSleepTriggered;
         Utilities.InputActivityReader.InputActivityDetected -= OnInputActivityDetected;
+
         if (_notifyIcon != null)
         {
             _notifyIcon.MouseMove -= NotifyIconOnMouseMove;
@@ -515,10 +521,10 @@ public class TrayIconService : IDisposable
         _tooltipWindow = null;
         _tooltipHideTimer?.Stop();
         _tooltipHideTimer = null;
-        _inputActivityTimer?.Stop();
-        _inputActivityTimer = null;
         _mouseLeaveCheckTimer?.Stop();
         _mouseLeaveCheckTimer = null;
+        _inputActivityTimer?.Stop();
+        _inputActivityTimer = null;
 
         _iconResource?.Dispose();
         _iconResource = null;
