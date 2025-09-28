@@ -165,11 +165,53 @@ public class MonitoringService : IDisposable
             {
                 _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
             }
-            else if (!inputActivityDetected && !cpuExceeding && !networkExceeding &&
-                     (_previousInputActivityDetected || _previousCpuExceeding || _previousNetworkExceeding))
+            else if (!inputActivityDetected && _previousInputActivityDetected)
             {
-                // All conditions cleared, reset to original status message
-                _lastChangeBasedStatusMessage = null;
+                // Input activity stopped, check if other conditions are still active
+                if (cpuExceeding)
+                {
+                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_CpuExceeded");
+                }
+                else if (networkExceeding)
+                {
+                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
+                }
+                else
+                {
+                    _lastChangeBasedStatusMessage = null;
+                }
+            }
+            else if (!cpuExceeding && _previousCpuExceeding)
+            {
+                // CPU activity stopped, check if other conditions are still active
+                if (inputActivityDetected)
+                {
+                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_ActivityDetected");
+                }
+                else if (networkExceeding)
+                {
+                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_NetworkExceeded");
+                }
+                else
+                {
+                    _lastChangeBasedStatusMessage = null;
+                }
+            }
+            else if (!networkExceeding && _previousNetworkExceeding)
+            {
+                // Network activity stopped, check if other conditions are still active
+                if (inputActivityDetected)
+                {
+                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_ActivityDetected");
+                }
+                else if (cpuExceeding)
+                {
+                    _lastChangeBasedStatusMessage = LocalizationManager.GetString("Status_CpuExceeded");
+                }
+                else
+                {
+                    _lastChangeBasedStatusMessage = null;
+                }
             }
 
             _previousInputActivityDetected = inputActivityDetected;
