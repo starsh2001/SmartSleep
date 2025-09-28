@@ -260,32 +260,30 @@ public class TrayIconService : IDisposable
         }
 
         lines.Add(snapshot.CpuMonitoringEnabled
-            ? (LocalizationManager.Format("LiveStatus_Cpu", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent), Brushes.White)
+            ? (LocalizationManager.Format("LiveStatus_Cpu", snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent),
+               StatusDisplayHelper.GetCpuBrush(snapshot.CpuUsagePercent, snapshot.CpuThresholdPercent, forTooltip: true))
             : (LocalizationManager.Format("LiveStatus_CpuDisabled", snapshot.CpuUsagePercent), Brushes.DimGray));
 
         lines.Add(snapshot.NetworkMonitoringEnabled
-            ? (LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond), Brushes.White)
+            ? (LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond),
+               StatusDisplayHelper.GetNetworkBrush(snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond, forTooltip: true))
             : (LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobytesPerSecond), Brushes.DimGray));
 
         // Conditions count display removed - no longer needed with real-time activity detection
 
         if (!string.IsNullOrWhiteSpace(snapshot.StatusMessage))
         {
-            string statusText;
-            Brush statusBrush;
+            // Use unified status logic
+            bool inputActivity = _inputActivityDetected;
+            bool cpuExceeding = snapshot.CpuMonitoringEnabled && snapshot.CpuUsagePercent >= snapshot.CpuThresholdPercent;
+            bool networkExceeding = snapshot.NetworkMonitoringEnabled && snapshot.NetworkKilobytesPerSecond >= snapshot.NetworkThresholdKilobytesPerSecond;
 
-            // Override with activity detection if input activity is detected
-            if (_inputActivityDetected)
-            {
-                statusText = LocalizationManager.GetString("Status_ActivityDetected");
-                statusBrush = Brushes.Orange;
-            }
-            else
-            {
-                var (statText, statBrush) = StatusDisplayHelper.FormatStatus(snapshot.StatusMessage);
-                statusText = statText;
-                statusBrush = statBrush;
-            }
+            var (statusText, statusBrush) = StatusDisplayHelper.GetStatusMessage(
+                snapshot.StatusMessage,
+                inputActivity,
+                cpuExceeding,
+                networkExceeding,
+                forTooltip: true);
 
             if (!string.IsNullOrWhiteSpace(statusText))
             {

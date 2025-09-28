@@ -964,17 +964,19 @@ public class SettingsViewModel : ViewModelBase
 
         // Conditions count display removed - no longer needed with real-time activity detection
 
-        // Main status message - add activity detection here too
-        var statusText = snapshot.StatusMessage;
-        if (_inputActivityDetected || _cpuActivityDetected || _networkActivityDetected)
-        {
-            statusText = LocalizationManager.GetString("Status_ActivityDetected");
-        }
+        // Main status message - use unified status logic
+        bool cpuExceeding = snapshot.CpuMonitoringEnabled && snapshot.CpuUsagePercent >= snapshot.CpuThresholdPercent;
+        bool networkExceeding = snapshot.NetworkMonitoringEnabled && snapshot.NetworkKilobytesPerSecond >= snapshot.NetworkThresholdKilobytesPerSecond;
 
-        var (displayText, brush) = StatusDisplayHelper.FormatStatus(statusText);
+        var (displayText, brush) = StatusDisplayHelper.GetStatusMessage(
+            snapshot.StatusMessage,
+            _inputActivityDetected,
+            cpuExceeding,
+            networkExceeding,
+            forTooltip: false);
+
         LiveStatusMessage = displayText;
-        LiveStatusBrush = (_inputActivityDetected || _cpuActivityDetected || _networkActivityDetected)
-            ? Brushes.Orange : brush;
+        LiveStatusBrush = brush;
 
         // Notify property changes for brushes
         OnPropertyChanged(nameof(LiveInputBrush));

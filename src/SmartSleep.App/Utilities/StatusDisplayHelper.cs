@@ -10,20 +10,60 @@ public static class StatusDisplayHelper
     private static readonly System.Windows.Media.Brush WarningBrush = System.Windows.Media.Brushes.Orange;
     private static readonly System.Windows.Media.Brush IdleBrush = System.Windows.Media.Brushes.SlateGray;
 
-    public static (string Text, System.Windows.Media.Brush Brush) FormatStatus(string? statusMessage)
+    public static (string Text, System.Windows.Media.Brush Brush) FormatStatus(string? statusMessage, bool forTooltip = false)
     {
         if (string.IsNullOrWhiteSpace(statusMessage))
         {
-            return (string.Empty, IdleBrush);
+            var idleBrush = forTooltip ? System.Windows.Media.Brushes.White : IdleBrush;
+            return (string.Empty, idleBrush);
         }
 
         var trimmed = statusMessage.Trim();
-        var brush = DetermineBrush(trimmed);
+        var brush = DetermineBrush(trimmed, forTooltip);
         var display = LocalizationManager.Format("Status_DisplayPrefix", trimmed);
         return (display, brush);
     }
 
-    private static System.Windows.Media.Brush DetermineBrush(string message)
+    public static System.Windows.Media.Brush GetCpuBrush(double usage, double threshold, bool forTooltip = false)
+    {
+        var normalBrush = forTooltip ? System.Windows.Media.Brushes.White : DefaultBrush;
+        return usage >= threshold ? WarningBrush : normalBrush;
+    }
+
+    public static System.Windows.Media.Brush GetNetworkBrush(double usage, double threshold, bool forTooltip = false)
+    {
+        var normalBrush = forTooltip ? System.Windows.Media.Brushes.White : DefaultBrush;
+        return usage >= threshold ? WarningBrush : normalBrush;
+    }
+
+    public static (string Text, System.Windows.Media.Brush Brush) GetStatusMessage(
+        string? originalStatusMessage,
+        bool inputActivityDetected,
+        bool cpuExceeding,
+        bool networkExceeding,
+        bool forTooltip = false)
+    {
+        // Priority: Input > CPU > Network > Original
+        if (inputActivityDetected)
+        {
+            return (LocalizationManager.GetString("Status_ActivityDetected"), WarningBrush);
+        }
+        else if (cpuExceeding)
+        {
+            return (LocalizationManager.GetString("Status_CpuExceeded"), WarningBrush);
+        }
+        else if (networkExceeding)
+        {
+            return (LocalizationManager.GetString("Status_NetworkExceeded"), WarningBrush);
+        }
+        else
+        {
+            // Normal status - use default formatting
+            return FormatStatus(originalStatusMessage, forTooltip);
+        }
+    }
+
+    private static System.Windows.Media.Brush DetermineBrush(string message, bool forTooltip = false)
     {
         var sleepKeyword = LocalizationManager.GetString("StatusKeyword_Sleep");
         var requestKeyword = LocalizationManager.GetString("StatusKeyword_Request");
@@ -35,14 +75,19 @@ public static class StatusDisplayHelper
             return SuccessBrush;
         }
 
-        var cpuKeyword = LocalizationManager.GetString("StatusKeyword_CPU");
-        var networkKeyword = LocalizationManager.GetString("StatusKeyword_Network");
-        if (message.Contains(cpuKeyword, StringComparison.OrdinalIgnoreCase) ||
-            message.Contains(networkKeyword, StringComparison.OrdinalIgnoreCase))
+        // Check for CPU keywords (CPU is same in both languages)
+        if (message.Contains("CPU", StringComparison.OrdinalIgnoreCase))
         {
             return WarningBrush;
         }
 
-        return DefaultBrush;
+        // Check for Network keywords (both English "Network" and Korean "네트워크")
+        if (message.Contains("Network", StringComparison.OrdinalIgnoreCase) ||
+            message.Contains("네트워크", StringComparison.OrdinalIgnoreCase))
+        {
+            return WarningBrush;
+        }
+
+        return forTooltip ? System.Windows.Media.Brushes.White : DefaultBrush;
     }
 }
