@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using SmartSleep.App.Interop;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Utilities;
 
@@ -202,7 +203,7 @@ public static class InputActivityReader
             {
                 _lastIdleTime = GetKeyboardMouseIdleTime();
                 _inputMonitoringTimer = new System.Threading.Timer(MonitorInputActivity, null,
-                    TimeSpan.FromMilliseconds(50), TimeSpan.FromMilliseconds(50));
+                    TimeSpan.FromMilliseconds(DefaultValues.InputMonitoringIntervalMs), TimeSpan.FromMilliseconds(DefaultValues.InputMonitoringIntervalMs));
             }
         }
     }

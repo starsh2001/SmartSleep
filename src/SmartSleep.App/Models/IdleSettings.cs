@@ -1,20 +1,21 @@
 ﻿using System;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Models;
 
 public class IdleSettings
 {
-    public bool UseInputActivity { get; set; } = true;
-    public bool IncludeGamepadInput { get; set; } = true;
-    public bool UseCpuActivity { get; set; } = true;
-    public double CpuUsagePercentageThreshold { get; set; } = 10.0;
-    public int CpuSmoothingWindow { get; set; } = 5;
-    public bool UseNetworkActivity { get; set; } = true;
-    public double NetworkKilobytesPerSecondThreshold { get; set; } = 128.0;
-    public int NetworkSmoothingWindow { get; set; } = 5;
+    public bool UseInputActivity { get; set; } = DefaultValues.UseInputActivity;
+    public bool IncludeGamepadInput { get; set; } = DefaultValues.IncludeGamepadInput;
+    public bool UseCpuActivity { get; set; } = DefaultValues.UseCpuActivity;
+    public double CpuUsagePercentageThreshold { get; set; } = DefaultValues.CpuUsagePercentageThreshold;
+    public int CpuSmoothingWindow { get; set; } = DefaultValues.CpuSmoothingWindow;
+    public bool UseNetworkActivity { get; set; } = DefaultValues.UseNetworkActivity;
+    public double NetworkKilobytesPerSecondThreshold { get; set; } = DefaultValues.NetworkKilobytesPerSecondThreshold;
+    public int NetworkSmoothingWindow { get; set; } = DefaultValues.NetworkSmoothingWindow;
 
     // Unified idle time for all conditions
-    public int IdleTimeSeconds { get; set; } = 1200;
+    public int IdleTimeSeconds { get; set; } = DefaultValues.IdleTimeSeconds;
 
     public TimeSpan IdleTimeThreshold => TimeSpan.FromSeconds(Math.Max(0, IdleTimeSeconds));
 
@@ -23,7 +24,7 @@ public class IdleSettings
     public TimeSpan CpuIdleDurationRequirement => IdleTimeThreshold;
     public TimeSpan NetworkIdleDurationRequirement => IdleTimeThreshold;
 
-    public static IdleSettings CreateDefault() => new();
+    public static IdleSettings CreateDefault() => DefaultValues.CreateDefaultIdleSettings();
 
     public IdleSettings Clone() => new()
     {

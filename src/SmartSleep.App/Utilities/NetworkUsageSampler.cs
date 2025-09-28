@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.NetworkInformation;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Utilities;
 
@@ -12,7 +13,7 @@ public class NetworkUsageSampler
     private long _previousTotalBytes;
     private readonly Queue<double> _window = new();
     private double _windowSum;
-    private int _windowSize = 3;
+    private int _windowSize = DefaultValues.NetworkSmoothingWindow;
 
     public void SetWindowSize(int windowSize)
     {

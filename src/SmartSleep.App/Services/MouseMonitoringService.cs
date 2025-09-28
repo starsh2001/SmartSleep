@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using Forms = System.Windows.Forms;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Services;
 
@@ -44,7 +45,7 @@ public class MouseMonitoringService : IDisposable
     public void StopMonitoring()
     {
         _cancellationTokenSource?.Cancel();
-        _monitoringTask?.Wait(TimeSpan.FromSeconds(1));
+        _monitoringTask?.Wait(TimeSpan.FromSeconds(DefaultValues.MouseMonitoringStopTimeoutSeconds));
     }
 
     private async Task MonitorMousePositionAsync()

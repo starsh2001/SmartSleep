@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Threading;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.ViewModels;
 
@@ -17,13 +18,13 @@ public class SettingsViewModel : ViewModelBase
     private bool _includeGamepadInput = true;
     private bool _useCpuActivity;
     private double _cpuUsageThreshold = 10.0;
-    private int _cpuSmoothingWindow = 5;
+    private int _cpuSmoothingWindow = DefaultValues.CpuSmoothingWindow;
     private bool _useNetworkActivity;
     private double _networkThreshold = 128.0;
-    private int _networkSmoothingWindow = 5;
+    private int _networkSmoothingWindow = DefaultValues.NetworkSmoothingWindow;
 
     // Unified idle time for all conditions
-    private int _idleTimeSeconds = 1200;
+    private int _idleTimeSeconds = DefaultValues.IdleTimeSeconds;
     private int _pollingIntervalSeconds;
 
     private MonitoringSnapshot? _previousSnapshot;
@@ -70,9 +71,9 @@ public class SettingsViewModel : ViewModelBase
     private bool _startWithWindows;
     private PowerAction _powerAction = PowerAction.Sleep;
     private bool _showConfirmationDialog = false;
-    private int _confirmationCountdownSeconds = 10;
+    private int _confirmationCountdownSeconds = DefaultValues.ConfirmationCountdownSeconds;
     private bool _enableSleepLogging = true;
-    private int _sleepCooldownSeconds = 45;
+    private int _sleepCooldownSeconds = DefaultValues.SleepCooldownSeconds;
     private string _statusMessage = string.Empty;
 
     private AppLanguage _language = AppLanguage.English;

@@ -1,25 +1,26 @@
 ﻿using System;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Models;
 
 public class ScheduleSettings
 {
-    public ScheduleMode Mode { get; set; } = ScheduleMode.Always;
+    public ScheduleMode Mode { get; set; } = DefaultValues.ScheduleMode;
 
     // Daily mode settings
-    public TimeSpan DailyStartTime { get; set; } = new(22, 0, 0); // 22:00
-    public TimeSpan DailyEndTime { get; set; } = new(6, 0, 0);    // 06:00
+    public TimeSpan DailyStartTime { get; set; } = DefaultValues.DailyStartTime;
+    public TimeSpan DailyEndTime { get; set; } = DefaultValues.DailyEndTime;
 
     // Weekly mode settings
-    public DaySchedule Monday { get; set; } = DaySchedule.CreateDefault();
-    public DaySchedule Tuesday { get; set; } = DaySchedule.CreateDefault();
-    public DaySchedule Wednesday { get; set; } = DaySchedule.CreateDefault();
-    public DaySchedule Thursday { get; set; } = DaySchedule.CreateDefault();
-    public DaySchedule Friday { get; set; } = DaySchedule.CreateDefault();
-    public DaySchedule Saturday { get; set; } = DaySchedule.CreateDefault();
-    public DaySchedule Sunday { get; set; } = DaySchedule.CreateDefault();
+    public DaySchedule Monday { get; set; } = DefaultValues.CreateDefaultDaySchedule();
+    public DaySchedule Tuesday { get; set; } = DefaultValues.CreateDefaultDaySchedule();
+    public DaySchedule Wednesday { get; set; } = DefaultValues.CreateDefaultDaySchedule();
+    public DaySchedule Thursday { get; set; } = DefaultValues.CreateDefaultDaySchedule();
+    public DaySchedule Friday { get; set; } = DefaultValues.CreateDefaultDaySchedule();
+    public DaySchedule Saturday { get; set; } = DefaultValues.CreateDefaultDaySchedule();
+    public DaySchedule Sunday { get; set; } = DefaultValues.CreateDefaultDaySchedule();
 
-    public static ScheduleSettings CreateDefault() => new();
+    public static ScheduleSettings CreateDefault() => DefaultValues.CreateDefaultScheduleSettings();
 
     public bool IsWithinWindow(DateTime now)
     {

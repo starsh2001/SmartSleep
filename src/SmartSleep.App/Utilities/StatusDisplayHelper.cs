@@ -54,11 +54,12 @@ public static class StatusDisplayHelper
 
             if (statusMessage == activityDetectedMsg || statusMessage == cpuExceededMsg || statusMessage == networkExceededMsg)
             {
+                // These messages already have prefixes, return as-is with warning brush
                 return (statusMessage, WarningBrush);
             }
         }
 
-        // Normal status - use default formatting
+        // Normal status - use default formatting (will add prefix if needed)
         return FormatStatus(statusMessage, forTooltip);
     }
 

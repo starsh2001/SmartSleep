@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using SmartSleep.App.Models;
 using SmartSleep.App.Utilities;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Services;
 
@@ -21,7 +22,7 @@ public class MonitoringService : IDisposable
     private DateTime _lastNetworkActiveUtc = DateTime.UtcNow;
     private DateTime _lastSleepAttemptUtc = DateTime.MinValue;
     private DateTime? _lastSleepSuccessUtc;
-    private TimeSpan _sleepCooldown = TimeSpan.FromSeconds(45);
+    private TimeSpan _sleepCooldown = TimeSpan.FromSeconds(DefaultValues.SleepCooldownSeconds);
     private bool _previousInputActivityDetected;
     private bool _previousCpuExceeding;
     private bool _previousNetworkExceeding;

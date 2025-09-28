@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using SmartSleep.App.Interop;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Utilities;
 
@@ -10,7 +11,7 @@ public class CpuUsageSampler
     private (ulong Idle, ulong Kernel, ulong User)? _previous;
     private readonly Queue<double> _window = new();
     private double _windowSum;
-    private int _windowSize = 3;
+    private int _windowSize = DefaultValues.CpuSmoothingWindow;
 
     public void SetWindowSize(int windowSize)
     {

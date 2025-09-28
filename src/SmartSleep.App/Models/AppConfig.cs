@@ -1,33 +1,22 @@
 using System;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Models;
 
 public class AppConfig
 {
-    public IdleSettings Idle { get; set; } = IdleSettings.CreateDefault();
-    public ScheduleSettings Schedule { get; set; } = ScheduleSettings.CreateDefault();
-    public PowerAction PowerAction { get; set; } = PowerAction.Sleep;
-    public bool ShowConfirmationDialog { get; set; } = false;
-    public int ConfirmationCountdownSeconds { get; set; } = 10;
-    public bool EnableSleepLogging { get; set; } = true;
-    public bool StartWithWindows { get; set; }
-    public int PollingIntervalSeconds { get; set; } = 1;
-    public int SleepCooldownSeconds { get; set; } = 45;
-    public AppLanguage Language { get; set; } = AppLanguage.English;
+    public IdleSettings Idle { get; set; } = DefaultValues.CreateDefaultIdleSettings();
+    public ScheduleSettings Schedule { get; set; } = DefaultValues.CreateDefaultScheduleSettings();
+    public PowerAction PowerAction { get; set; } = DefaultValues.PowerAction;
+    public bool ShowConfirmationDialog { get; set; } = DefaultValues.ShowConfirmationDialog;
+    public int ConfirmationCountdownSeconds { get; set; } = DefaultValues.ConfirmationCountdownSeconds;
+    public bool EnableSleepLogging { get; set; } = DefaultValues.EnableSleepLogging;
+    public bool StartWithWindows { get; set; } = DefaultValues.StartWithWindows;
+    public int PollingIntervalSeconds { get; set; } = DefaultValues.PollingIntervalSeconds;
+    public int SleepCooldownSeconds { get; set; } = DefaultValues.SleepCooldownSeconds;
+    public AppLanguage Language { get; set; } = DefaultValues.Language;
 
-    public static AppConfig CreateDefault() => new()
-    {
-        Idle = IdleSettings.CreateDefault(),
-        Schedule = ScheduleSettings.CreateDefault(),
-        PowerAction = PowerAction.Sleep,
-        ShowConfirmationDialog = false,
-        ConfirmationCountdownSeconds = 10,
-        EnableSleepLogging = true,
-        StartWithWindows = false,
-        PollingIntervalSeconds = 1,
-        SleepCooldownSeconds = 45,
-        Language = AppLanguage.English
-    };
+    public static AppConfig CreateDefault() => DefaultValues.CreateDefaultAppConfig();
 
     public AppConfig Clone() => new()
     {

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using SmartSleep.App.Models;
+using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.ViewModels;
 
@@ -32,7 +33,7 @@ public class ConfirmationDialogViewModel : ViewModelBase
 
         _timer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromSeconds(1)
+            Interval = TimeSpan.FromSeconds(DefaultValues.ConfirmationTimerIntervalMs / 1000)
         };
         _timer.Tick += OnTimerTick;
     }

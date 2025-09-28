@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using System.Windows.Media;
+using SmartSleep.App.Configuration;
 using Brush = System.Windows.Media.Brush;
 using Brushes = System.Windows.Media.Brushes;
 using SmartSleep.App.Models;
@@ -281,14 +282,14 @@ public class TrayIconService : IDisposable
 
         _tooltipHideTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(2000)
+            Interval = TimeSpan.FromMilliseconds(DefaultValues.TooltipHideDelayMs)
         };
         _tooltipHideTimer.Tick += (_, _) => HideTooltipWindow();
 
         // Timer to check if mouse left the tray area
         _mouseLeaveCheckTimer = new DispatcherTimer
         {
-            Interval = TimeSpan.FromMilliseconds(200) // Check every 200ms to reduce flicker
+            Interval = TimeSpan.FromMilliseconds(DefaultValues.MouseLeaveCheckIntervalMs) // Check every 200ms to reduce flicker
         };
         _mouseLeaveCheckTimer.Tick += CheckMouseLeave;
 
