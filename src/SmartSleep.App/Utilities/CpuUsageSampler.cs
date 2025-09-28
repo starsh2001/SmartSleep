@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using SmartSleep.App.Interop;
+using System.Diagnostics;
 using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Utilities;
 
-public class CpuUsageSampler
+public class CpuUsageSampler : IDisposable
 {
     private readonly object _syncRoot = new();
-    private (ulong Idle, ulong Kernel, ulong User)? _previous;
     private readonly Queue<double> _window = new();
     private double _windowSum;
     private int _windowSize = DefaultValues.CpuSmoothingWindow;
+    private PerformanceCounter? _cpuCounter;
+    private bool _disposed;
 
     public void SetWindowSize(int windowSize)
     {
@@ -30,42 +31,53 @@ public class CpuUsageSampler
 
     public double SampleCpuUsagePercentage()
     {
-        if (!NativeMethods.GetSystemTimes(out var idle, out var kernel, out var user))
-        {
+        if (_disposed)
             return GetAverage();
-        }
-
-        var idleTicks = ToUInt64(idle);
-        var kernelTicks = ToUInt64(kernel);
-        var userTicks = ToUInt64(user);
 
         lock (_syncRoot)
         {
-            if (_previous is null)
+            try
             {
-                _previous = (idleTicks, kernelTicks, userTicks);
-                AddSample(0);
+                // Initialize counter on first use
+                if (_cpuCounter == null)
+                {
+                    try
+                    {
+                        // Try Processor Information Utility first (Task Manager equivalent)
+                        _cpuCounter = new PerformanceCounter("Processor Information", "% Processor Utility", "_Total");
+                        // First call always returns 0, so call it once and discard
+                        _cpuCounter.NextValue();
+                        AddSample(0);
+                        return GetAverage();
+                    }
+                    catch
+                    {
+                        // Fallback to standard Processor Time if Processor Information is not available
+                        try
+                        {
+                            _cpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+                            _cpuCounter.NextValue();
+                            AddSample(0);
+                            return GetAverage();
+                        }
+                        catch
+                        {
+                            return GetAverage();
+                        }
+                    }
+                }
+
+                var cpuValue = _cpuCounter.NextValue();
+                AddSample(Math.Clamp(cpuValue, 0, 100));
                 return GetAverage();
             }
-
-            var previous = _previous.Value;
-            var idleDelta = Subtract(idleTicks, previous.Idle);
-            var kernelDelta = Subtract(kernelTicks, previous.Kernel);
-            var userDelta = Subtract(userTicks, previous.User);
-            var systemDelta = kernelDelta + userDelta;
-
-            _previous = (idleTicks, kernelTicks, userTicks);
-
-            if (systemDelta <= 0)
+            catch
             {
-                AddSample(0);
+                // Reset counter on error and return average
+                _cpuCounter?.Dispose();
+                _cpuCounter = null;
                 return GetAverage();
             }
-
-            var busy = Math.Max(0, systemDelta - idleDelta);
-            var usage = (double)busy * 100.0 / systemDelta;
-            AddSample(Math.Clamp(usage, 0, 100));
-            return GetAverage();
         }
     }
 
@@ -94,7 +106,16 @@ public class CpuUsageSampler
         return _windowSum / _window.Count;
     }
 
-    private static ulong ToUInt64(NativeMethods.FILETIME fileTime) => ((ulong)fileTime.dwHighDateTime << 32) | fileTime.dwLowDateTime;
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
 
-    private static ulong Subtract(ulong current, ulong previous) => current >= previous ? current - previous : current;
+        lock (_syncRoot)
+        {
+            _cpuCounter?.Dispose();
+            _cpuCounter = null;
+            _disposed = true;
+        }
+    }
 }

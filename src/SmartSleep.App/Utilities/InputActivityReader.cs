@@ -9,7 +9,6 @@ public static class InputActivityReader
 {
     private static GamepadActivityReader? _gamepadReader;
     private static readonly object _lock = new();
-    private static bool _gamepadInitialized = false;
     private static TimeSpan _cachedGamepadIdleTime = TimeSpan.MaxValue;
     private static Task? _gamepadInitializationTask;
     private static System.Threading.Timer? _inputMonitoringTimer;
@@ -96,7 +95,6 @@ public static class InputActivityReader
                 if (initialized)
                 {
                     _gamepadReader = reader;
-                    _gamepadInitialized = true;
 
                     // Start periodic update in background
                     _ = Task.Run(UpdateGamepadIdleTimeLoop);
@@ -256,7 +254,6 @@ public static class InputActivityReader
                 _gamepadReader = null;
             }
 
-            _gamepadInitialized = false;
         }
     }
 }

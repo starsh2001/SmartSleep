@@ -13,7 +13,7 @@ public class SleepLogService
     public SleepLogService()
     {
         // Log file in the same directory as the executable
-        var exeDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? ".";
+        var exeDirectory = AppContext.BaseDirectory;
         _logFilePath = Path.Combine(exeDirectory, "SmartSleep_Log.txt");
     }
 

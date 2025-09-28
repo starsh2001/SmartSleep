@@ -393,8 +393,8 @@ public class GamepadActivityReader : IDisposable
         try
         {
             // Unregister raw input devices
-                var devices = new NativeMethods.RAWINPUTDEVICE[]
-                {
+            var devices = new NativeMethods.RAWINPUTDEVICE[]
+            {
                     new()
                     {
                         usUsagePage = NativeMethods.HID_USAGE_PAGE_GENERIC,
@@ -409,7 +409,7 @@ public class GamepadActivityReader : IDisposable
                         dwFlags = 0x00000001, // RIDEV_REMOVE
                         hwndTarget = IntPtr.Zero
                     }
-                };
+            };
 
             var size = (uint)Marshal.SizeOf<NativeMethods.RAWINPUTDEVICE>();
             NativeMethods.RegisterRawInputDevices(devices, (uint)devices.Length, size);

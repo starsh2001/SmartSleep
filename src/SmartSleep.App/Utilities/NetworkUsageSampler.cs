@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Net.NetworkInformation;
 using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Utilities;
 
-public class NetworkUsageSampler
+public class NetworkUsageSampler : IDisposable
 {
     private readonly object _syncRoot = new();
-    private DateTime _previousTimestamp = DateTime.MinValue;
-    private long _previousTotalBytes;
     private readonly Queue<double> _window = new();
     private double _windowSum;
     private int _windowSize = DefaultValues.NetworkSmoothingWindow;
+    private PerformanceCounter? _bytesTotalCounter;
+    private bool _disposed;
+    private string? _selectedInterface;
 
     public void SetWindowSize(int windowSize)
     {
@@ -30,55 +31,86 @@ public class NetworkUsageSampler
         }
     }
 
-    public double SampleKilobytesPerSecond()
+    public double SampleKilobitsPerSecond()
     {
-        var now = DateTime.UtcNow;
-        var interfaces = NetworkInterface.GetAllNetworkInterfaces()
-            .Where(nic => nic.OperationalStatus == OperationalStatus.Up && !IsIgnored(nic.NetworkInterfaceType))
-            .ToList();
-
-        long totalBytes = 0;
-        foreach (var nic in interfaces)
-        {
-            try
-            {
-                var statistics = nic.GetIPv4Statistics();
-                totalBytes += statistics.BytesReceived + statistics.BytesSent;
-            }
-            catch
-            {
-                // Ignore interfaces that do not support IPv4 statistics.
-            }
-        }
+        if (_disposed)
+            return GetAverage();
 
         lock (_syncRoot)
         {
-            if (_previousTimestamp == DateTime.MinValue)
+            try
             {
-                _previousTimestamp = now;
-                _previousTotalBytes = totalBytes;
-                AddSample(0);
+                // Initialize counter on first use
+                if (_bytesTotalCounter == null)
+                {
+                    if (_selectedInterface == null)
+                    {
+                        // Get available network interfaces from performance counters
+                        var category = new PerformanceCounterCategory("Network Interface");
+                        var instanceNames = category.GetInstanceNames();
+
+                        // Find the best interface, excluding system interfaces
+                        _selectedInterface = instanceNames
+                            .Where(name => !string.IsNullOrEmpty(name) &&
+                                          !name.Equals("_Total", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Equals("Loopback Pseudo-Interface 1", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Contains("isatap", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Contains("Teredo", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Contains("VPN", StringComparison.OrdinalIgnoreCase) &&
+                                          !name.Contains("Virtual", StringComparison.OrdinalIgnoreCase))
+                            .OrderByDescending(name => name.Contains("Ethernet", StringComparison.OrdinalIgnoreCase) ||
+                                                      name.Contains("Realtek", StringComparison.OrdinalIgnoreCase) ||
+                                                      name.Contains("Intel", StringComparison.OrdinalIgnoreCase))
+                            .FirstOrDefault();
+
+                        // Fallback to _Total if no specific interface found
+                        if (_selectedInterface == null)
+                        {
+                            _selectedInterface = "_Total";
+                        }
+                    }
+
+                    try
+                    {
+                        // Use "Bytes Total/sec" counter which matches Task Manager network usage
+                        _bytesTotalCounter = new PerformanceCounter("Network Interface", "Bytes Total/sec", _selectedInterface);
+
+                        // First call always returns 0, so call once and discard
+                        _bytesTotalCounter.NextValue();
+                        AddSample(0);
+                        return GetAverage();
+                    }
+                    catch
+                    {
+                        // Fallback to _Total if specific interface fails
+                        try
+                        {
+                            _selectedInterface = "_Total";
+                            _bytesTotalCounter = new PerformanceCounter("Network Interface", "Bytes Total/sec", "_Total");
+                            _bytesTotalCounter.NextValue();
+                            AddSample(0);
+                            return GetAverage();
+                        }
+                        catch
+                        {
+                            return GetAverage();
+                        }
+                    }
+                }
+
+                var bytesPerSecond = _bytesTotalCounter.NextValue();
+                var kbps = (bytesPerSecond * 8) / 1000.0; // Convert bytes/sec to kbps
+
+                AddSample(Math.Max(0, kbps));
                 return GetAverage();
             }
-
-            var seconds = (now - _previousTimestamp).TotalSeconds;
-            if (seconds <= 0)
+            catch
             {
-                AddSample(0);
+                // Reset counter on error and return average
+                _bytesTotalCounter?.Dispose();
+                _bytesTotalCounter = null;
                 return GetAverage();
             }
-
-            var deltaBytes = totalBytes - _previousTotalBytes;
-            if (deltaBytes < 0)
-            {
-                deltaBytes = 0;
-            }
-
-            _previousTimestamp = now;
-            _previousTotalBytes = totalBytes;
-            var kbps = deltaBytes / seconds / 1024.0;
-            AddSample(Math.Max(0, kbps));
-            return GetAverage();
         }
     }
 
@@ -107,5 +139,16 @@ public class NetworkUsageSampler
         return _windowSum / _window.Count;
     }
 
-    private static bool IsIgnored(NetworkInterfaceType type) => type == NetworkInterfaceType.Loopback || type == NetworkInterfaceType.Tunnel;
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        lock (_syncRoot)
+        {
+            _bytesTotalCounter?.Dispose();
+            _bytesTotalCounter = null;
+            _disposed = true;
+        }
+    }
 }

@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2025-09-28
+
+### Improved
+- **Performance Monitoring Accuracy**: Upgraded CPU and network monitoring to use Task Manager equivalent performance counters
+  - CPU monitoring now uses `Processor Information\% Processor Utility` (Task Manager equivalent)
+  - Network monitoring now uses `Network Interface\Bytes Total/sec` (Resource Monitor equivalent)
+- **Dynamic Version Management**: Implemented centralized version management system
+  - Application name and version now automatically reflect actual assembly version
+  - Tooltip and settings window titles dynamically show "Smart Sleep 0.1.1"
+- **Resource Management**: Added proper IDisposable pattern to all performance samplers
+- **Code Quality**: Removed WMI dependencies in favor of more stable PerformanceCounter API
+
+### Technical Details
+- Replaced WMI-based monitoring with Windows Performance Counter API
+- Added AppInfo utility class for centralized application metadata
+- Improved error handling and fallback mechanisms for performance counters
+
 ## [0.1.0] - 2025-01-XX
 
 ### Added

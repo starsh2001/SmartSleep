@@ -73,7 +73,7 @@ public static class DefaultValues
     /// <summary>
     /// Default CPU usage threshold percentage
     /// </summary>
-    public static readonly double CpuUsagePercentageThreshold = 12.0;
+    public static readonly double CpuUsagePercentageThreshold = 20.0;
 
     /// <summary>
     /// Default CPU usage smoothing window size
@@ -86,9 +86,9 @@ public static class DefaultValues
     public static readonly bool UseNetworkActivity = true;
 
     /// <summary>
-    /// Default network usage threshold (KB/s)
+    /// Default network usage threshold (kbps)
     /// </summary>
-    public static readonly double NetworkKilobytesPerSecondThreshold = 200.0;
+    public static readonly double NetworkKilobitsPerSecondThreshold = 2000.0;
 
     /// <summary>
     /// Default network usage smoothing window size
@@ -234,7 +234,7 @@ public static class DefaultValues
         CpuUsagePercentageThreshold = CpuUsagePercentageThreshold,
         CpuSmoothingWindow = CpuSmoothingWindow,
         UseNetworkActivity = UseNetworkActivity,
-        NetworkKilobytesPerSecondThreshold = NetworkKilobytesPerSecondThreshold,
+        NetworkKilobitsPerSecondThreshold = NetworkKilobitsPerSecondThreshold,
         NetworkSmoothingWindow = NetworkSmoothingWindow,
         IdleTimeSeconds = IdleTimeSeconds
     };

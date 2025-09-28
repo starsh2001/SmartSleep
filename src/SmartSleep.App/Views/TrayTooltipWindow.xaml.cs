@@ -27,7 +27,6 @@ public partial class TrayTooltipWindow : Window
     {
         _shouldRender = shouldRender;
         Visibility = shouldRender ? Visibility.Visible : Visibility.Hidden;
-        System.Diagnostics.Debug.WriteLine($"Tooltip visibility set to: {(shouldRender ? "Visible" : "Hidden")}");
     }
 
     public bool ShouldRender => _shouldRender;
