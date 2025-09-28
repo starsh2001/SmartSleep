@@ -61,7 +61,6 @@ public class MouseMonitoringService : IDisposable
                     if (currentMouseOver != _lastMouseOverState)
                     {
                         _lastMouseOverState = currentMouseOver;
-                        System.Diagnostics.Debug.WriteLine($"MouseMonitoringService: Mouse state changed to {currentMouseOver}");
 
                         // Notify on UI thread
                         _dispatcher.BeginInvoke(() =>
@@ -72,7 +71,7 @@ public class MouseMonitoringService : IDisposable
                 }
 
                 // Check every 50ms for smooth experience
-                await Task.Delay(50, _cancellationTokenSource.Token);
+                await Task.Delay(50, _cancellationTokenSource?.Token ?? CancellationToken.None);
             }
             catch (OperationCanceledException)
             {
@@ -81,7 +80,7 @@ public class MouseMonitoringService : IDisposable
             catch
             {
                 // Continue monitoring even if there's an error
-                await Task.Delay(100, _cancellationTokenSource.Token);
+                await Task.Delay(100, _cancellationTokenSource?.Token ?? CancellationToken.None);
             }
         }
     }
@@ -111,8 +110,11 @@ public class MouseMonitoringService : IDisposable
             else
             {
                 // Fallback: use approximate tray area detection
-                var screenBounds = System.Windows.Forms.Screen.PrimaryScreen.Bounds;
-                var workingArea = System.Windows.Forms.Screen.PrimaryScreen.WorkingArea;
+                var primaryScreen = System.Windows.Forms.Screen.PrimaryScreen;
+                if (primaryScreen == null) return false;
+
+                var screenBounds = primaryScreen.Bounds;
+                var workingArea = primaryScreen.WorkingArea;
 
                 var trayArea = new Rectangle(
                     screenBounds.Width - 100,

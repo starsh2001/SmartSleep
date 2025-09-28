@@ -16,7 +16,14 @@
       "Bash(cmd /c:*)",
       "Bash(powershell:*)",
       "Bash(dotnet build:*)",
-      "Bash(build/publish/SmartSleep.App.exe)"
+      "Bash(build/publish/SmartSleep.App.exe)",
+      "Bash(wmic process where:*)",
+      "Bash(git tag:*)",
+      "Bash(dir buildpublish)",
+      "WebSearch",
+      "WebFetch(domain:wutils.com)",
+      "WebFetch(domain:blog.dewin.me)",
+      "Bash(dotnet add:*)"
     ],
     "deny": [],
     "ask": []

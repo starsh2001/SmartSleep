@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using SmartSleep.App.Interop;
+using System.Linq;
+using System.Management;
 using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Utilities;
@@ -8,7 +9,6 @@ namespace SmartSleep.App.Utilities;
 public class CpuUsageSampler
 {
     private readonly object _syncRoot = new();
-    private (ulong Idle, ulong Kernel, ulong User)? _previous;
     private readonly Queue<double> _window = new();
     private double _windowSum;
     private int _windowSize = DefaultValues.CpuSmoothingWindow;
@@ -30,42 +30,63 @@ public class CpuUsageSampler
 
     public double SampleCpuUsagePercentage()
     {
-        if (!NativeMethods.GetSystemTimes(out var idle, out var kernel, out var user))
-        {
-            return GetAverage();
-        }
-
-        var idleTicks = ToUInt64(idle);
-        var kernelTicks = ToUInt64(kernel);
-        var userTicks = ToUInt64(user);
-
         lock (_syncRoot)
         {
-            if (_previous is null)
+            try
             {
-                _previous = (idleTicks, kernelTicks, userTicks);
-                AddSample(0);
+                // Use Task Manager equivalent: Processor Information Utility
+                double cpuValue = 0;
+
+                // First try: Processor Information % Processor Utility (Task Manager equivalent)
+                try
+                {
+                    using var searcher1 = new ManagementObjectSearcher("SELECT PercentProcessorUtility FROM Win32_PerfFormattedData_Counters_ProcessorInformation WHERE Name='_Total'");
+                    using var results1 = searcher1.Get();
+
+                    var processorUtility = results1
+                        .Cast<ManagementObject>()
+                        .FirstOrDefault()?
+                        .Properties["PercentProcessorUtility"]?
+                        .Value;
+
+                    if (processorUtility != null)
+                    {
+                        cpuValue = Convert.ToDouble(processorUtility);
+                    }
+                    else
+                    {
+                        throw new Exception("Processor Utility not available");
+                    }
+                }
+                catch
+                {
+                    // Fallback to standard PercentProcessorTime if Processor Information is not available
+                    try
+                    {
+                        using var searcher2 = new ManagementObjectSearcher("SELECT PercentProcessorTime FROM Win32_PerfFormattedData_PerfOS_Processor WHERE Name='_Total'");
+                        using var results2 = searcher2.Get();
+
+                        var cpuUsage = results2
+                            .Cast<ManagementObject>()
+                            .First()
+                            .Properties["PercentProcessorTime"]
+                            .Value;
+
+                        cpuValue = Convert.ToDouble(cpuUsage);
+                    }
+                    catch
+                    {
+                        return GetAverage();
+                    }
+                }
+
+                AddSample(Math.Clamp(cpuValue, 0, 100));
                 return GetAverage();
             }
-
-            var previous = _previous.Value;
-            var idleDelta = Subtract(idleTicks, previous.Idle);
-            var kernelDelta = Subtract(kernelTicks, previous.Kernel);
-            var userDelta = Subtract(userTicks, previous.User);
-            var systemDelta = kernelDelta + userDelta;
-
-            _previous = (idleTicks, kernelTicks, userTicks);
-
-            if (systemDelta <= 0)
+            catch
             {
-                AddSample(0);
                 return GetAverage();
             }
-
-            var busy = Math.Max(0, systemDelta - idleDelta);
-            var usage = (double)busy * 100.0 / systemDelta;
-            AddSample(Math.Clamp(usage, 0, 100));
-            return GetAverage();
         }
     }
 
@@ -94,7 +115,4 @@ public class CpuUsageSampler
         return _windowSum / _window.Count;
     }
 
-    private static ulong ToUInt64(NativeMethods.FILETIME fileTime) => ((ulong)fileTime.dwHighDateTime << 32) | fileTime.dwLowDateTime;
-
-    private static ulong Subtract(ulong current, ulong previous) => current >= previous ? current - previous : current;
 }

@@ -19,8 +19,8 @@ public class MonitoringSnapshot
     public bool CpuConditionMet { get; init; }
 
     public bool NetworkMonitoringEnabled { get; init; }
-    public double NetworkKilobytesPerSecond { get; init; }
-    public double NetworkThresholdKilobytesPerSecond { get; init; }
+    public double NetworkKilobitsPerSecond { get; init; }
+    public double NetworkThresholdKilobitsPerSecond { get; init; }
     public TimeSpan NetworkIdleDuration { get; init; }
     public TimeSpan NetworkIdleRequirement { get; init; }
     public bool NetworkConditionMet { get; init; }

@@ -139,9 +139,9 @@ public class MonitoringService : IDisposable
 
             var inputIdle = nowUtc - _inputIdleBaselineUtc;
             var cpuUsage = _cpuSampler.SampleCpuUsagePercentage();
-            var networkUsage = _networkSampler.SampleKilobytesPerSecond();
+            var networkUsage = _networkSampler.SampleKilobitsPerSecond();
             var cpuUsageOk = cpuUsage <= snapshotConfig.Idle.CpuUsagePercentageThreshold;
-            var networkUsageOk = networkUsage <= snapshotConfig.Idle.NetworkKilobytesPerSecondThreshold;
+            var networkUsageOk = networkUsage <= snapshotConfig.Idle.NetworkKilobitsPerSecondThreshold;
             var cpuIdleDuration = CalculateCpuIdleDuration(snapshotConfig, cpuUsage, nowUtc);
             var networkIdleDuration = CalculateNetworkIdleDuration(snapshotConfig, networkUsage, nowUtc);
 
@@ -298,8 +298,8 @@ public class MonitoringService : IDisposable
                 CpuIdleRequirement = snapshotConfig.Idle.CpuIdleDurationRequirement,
                 CpuConditionMet = cpuConditionMet,
                 NetworkMonitoringEnabled = scheduleActive && snapshotConfig.Idle.UseNetworkActivity,
-                NetworkKilobytesPerSecond = networkUsage,
-                NetworkThresholdKilobytesPerSecond = snapshotConfig.Idle.NetworkKilobytesPerSecondThreshold,
+                NetworkKilobitsPerSecond = networkUsage,
+                NetworkThresholdKilobitsPerSecond = snapshotConfig.Idle.NetworkKilobitsPerSecondThreshold,
                 NetworkIdleDuration = networkIdleDisplay,
                 NetworkIdleRequirement = snapshotConfig.Idle.NetworkIdleDurationRequirement,
                 NetworkConditionMet = networkConditionMet,
@@ -360,7 +360,7 @@ public class MonitoringService : IDisposable
             return TimeSpan.Zero;
         }
 
-        if (networkUsage <= config.Idle.NetworkKilobytesPerSecondThreshold)
+        if (networkUsage <= config.Idle.NetworkKilobitsPerSecondThreshold)
         {
             return nowUtc - _lastNetworkActiveUtc;
         }
@@ -503,7 +503,7 @@ public class MonitoringService : IDisposable
                                 (!config.Idle.UseInputActivity && !config.Idle.UseCpuActivity);
         if (networkBlocksAll)
         {
-            return LocalizationManager.Format("Status_NetworkBlocking", networkUsage, config.Idle.NetworkKilobytesPerSecondThreshold);
+            return LocalizationManager.Format("Status_NetworkBlocking", networkUsage, config.Idle.NetworkKilobitsPerSecondThreshold);
         }
 
         var conditionRemaining = Math.Max(inputRemaining, Math.Max(cpuRemaining, networkRemaining));

@@ -142,7 +142,7 @@ public static class LocalizationManager
         dictionary["Settings_CpuThreshold"] = "CPU threshold (%):";
         dictionary["Settings_CpuSmoothingWindow"] = "CPU moving average samples:";
         dictionary["Settings_UseNetworkActivity"] = "Monitor network activity";
-        dictionary["Settings_NetworkThreshold"] = "Network threshold (KB/s):";
+        dictionary["Settings_NetworkThreshold"] = "Network threshold (kbps):";
         dictionary["Settings_NetworkSmoothingWindow"] = "Network moving average samples:";
         dictionary["Settings_PollingInterval"] = "Sampling interval (s):";
         dictionary["Settings_Section_Schedule"] = "Monitoring Schedule";
@@ -198,8 +198,8 @@ public static class LocalizationManager
         dictionary["LiveStatus_InputDisabled"] = "Input: disabled";
         dictionary["LiveStatus_Cpu"] = "CPU {0:F1}% / {1:F1}%";
         dictionary["LiveStatus_CpuDisabled"] = "CPU {0:F1}% (disabled)";
-        dictionary["LiveStatus_Network"] = "Network {0:F0}KB/s / {1:F0}KB/s";
-        dictionary["LiveStatus_NetworkDisabled"] = "Network {0:F0}KB/s (disabled)";
+        dictionary["LiveStatus_Network"] = "Network {0:F0}kbps / {1:F0}kbps";
+        dictionary["LiveStatus_NetworkDisabled"] = "Network {0:F0}kbps (disabled)";
         dictionary["Status_ActivityDetected"] = "[Status] Activity detected";
         dictionary["Status_CpuExceeded"] = "[Status] CPU usage exceeded";
         dictionary["Status_NetworkExceeded"] = "[Status] Network usage exceeded";
@@ -215,7 +215,7 @@ public static class LocalizationManager
         dictionary["Status_ActionNow"] = "Requesting {0}";
         dictionary["Status_ActionIn"] = "{0} in {1:F0}s";
         dictionary["Status_CpuBlocking"] = "CPU usage {0:F1}%/{1:F1}%";
-        dictionary["Status_NetworkBlocking"] = "Network {0:F0}/{1:F0}KB/s";
+        dictionary["Status_NetworkBlocking"] = "Network {0:F0}/{1:F0}kbps";
 
         // Notifications
         dictionary["Notification_ActionSucceeded"] = "{0} command sent (last success: {1})";
@@ -278,7 +278,7 @@ public static class LocalizationManager
         dictionary["Settings_CpuThreshold"] = "CPU 임계값 (%):";
         dictionary["Settings_CpuSmoothingWindow"] = "CPU 이동 평균 샘플 수:";
         dictionary["Settings_UseNetworkActivity"] = "네트워크 활동 사용";
-        dictionary["Settings_NetworkThreshold"] = "네트워크 임계값 (KB/s):";
+        dictionary["Settings_NetworkThreshold"] = "네트워크 임계값 (kbps):";
         dictionary["Settings_NetworkSmoothingWindow"] = "네트워크 이동 평균 샘플 수:";
         dictionary["Settings_PollingInterval"] = "모니터링 주기 (초):";
         dictionary["Settings_Section_Schedule"] = "감시 시간 설정";
@@ -334,8 +334,8 @@ public static class LocalizationManager
         dictionary["LiveStatus_InputDisabled"] = "입력: 비활성화";
         dictionary["LiveStatus_Cpu"] = "CPU {0:F1}% / {1:F1}%";
         dictionary["LiveStatus_CpuDisabled"] = "CPU {0:F1}% (비활성화)";
-        dictionary["LiveStatus_Network"] = "네트워크 {0:F0}KB/s / {1:F0}KB/s";
-        dictionary["LiveStatus_NetworkDisabled"] = "네트워크 {0:F0}KB/s (비활성화)";
+        dictionary["LiveStatus_Network"] = "네트워크 {0:F0}kbps / {1:F0}kbps";
+        dictionary["LiveStatus_NetworkDisabled"] = "네트워크 {0:F0}kbps (비활성화)";
         dictionary["Status_ActivityDetected"] = "[상태] 활동 감지됨";
         dictionary["Status_CpuExceeded"] = "[상태] CPU 사용량 초과";
         dictionary["Status_NetworkExceeded"] = "[상태] 네트워크 사용량 초과";
@@ -351,7 +351,7 @@ public static class LocalizationManager
         dictionary["Status_ActionNow"] = "{0} 요청";
         dictionary["Status_ActionIn"] = "{0}까지 {1:F0}초";
         dictionary["Status_CpuBlocking"] = "CPU 사용률 {0:F1}%/{1:F1}%";
-        dictionary["Status_NetworkBlocking"] = "네트워크 {0:F0}/{1:F0}KB/s";
+        dictionary["Status_NetworkBlocking"] = "네트워크 {0:F0}/{1:F0}kbps";
 
         // Notifications
         dictionary["Notification_ActionSucceeded"] = "{0} 명령 전송 (마지막 성공: {1})";

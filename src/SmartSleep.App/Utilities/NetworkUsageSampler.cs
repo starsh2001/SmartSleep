@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.NetworkInformation;
+using System.Management;
 using SmartSleep.App.Configuration;
 
 namespace SmartSleep.App.Utilities;
@@ -9,11 +9,10 @@ namespace SmartSleep.App.Utilities;
 public class NetworkUsageSampler
 {
     private readonly object _syncRoot = new();
-    private DateTime _previousTimestamp = DateTime.MinValue;
-    private long _previousTotalBytes;
     private readonly Queue<double> _window = new();
     private double _windowSum;
     private int _windowSize = DefaultValues.NetworkSmoothingWindow;
+    private string? _selectedInterface;
 
     public void SetWindowSize(int windowSize)
     {
@@ -30,55 +29,67 @@ public class NetworkUsageSampler
         }
     }
 
-    public double SampleKilobytesPerSecond()
+    public double SampleKilobitsPerSecond()
     {
-        var now = DateTime.UtcNow;
-        var interfaces = NetworkInterface.GetAllNetworkInterfaces()
-            .Where(nic => nic.OperationalStatus == OperationalStatus.Up && !IsIgnored(nic.NetworkInterfaceType))
-            .ToList();
-
-        long totalBytes = 0;
-        foreach (var nic in interfaces)
+        lock (_syncRoot)
         {
             try
             {
-                var statistics = nic.GetIPv4Statistics();
-                totalBytes += statistics.BytesReceived + statistics.BytesSent;
+                if (_selectedInterface == null)
+                {
+                    // Get available network interfaces from WMI
+                    using var searcher = new ManagementObjectSearcher("SELECT Name FROM Win32_PerfFormattedData_Tcpip_NetworkInterface");
+                    using var results = searcher.Get();
+
+                    var interfaceNames = results
+                        .Cast<ManagementObject>()
+                        .Select(mo => mo["Name"]?.ToString())
+                        .Where(name => !string.IsNullOrEmpty(name))
+                        .ToArray();
+
+                    _selectedInterface = interfaceNames
+                        .Where(name => name != null &&
+                                      !name.Equals("Loopback Pseudo-Interface 1", StringComparison.OrdinalIgnoreCase) &&
+                                      !name.Contains("isatap") &&
+                                      !name.Contains("Teredo") &&
+                                      !name.Contains("UsbNcm") &&
+                                      !name.Contains("VPN") &&
+                                      !name.Contains("Virtual"))
+                        .OrderByDescending(name => name?.Contains("Ethernet") == true || name?.Contains("Realtek") == true || name?.Contains("Intel") == true)
+                        .FirstOrDefault();
+
+                    if (_selectedInterface == null)
+                    {
+                        return GetAverage();
+                    }
+
+                    return GetAverage();
+                }
+
+                // Get network usage directly from WMI - same as Task Manager
+                using var usageSearcher = new ManagementObjectSearcher($"SELECT BytesTotalPerSec FROM Win32_PerfFormattedData_Tcpip_NetworkInterface WHERE Name='{_selectedInterface.Replace("'", "''")}'");
+                using var usageResults = usageSearcher.Get();
+
+                var networkUsage = usageResults
+                    .Cast<ManagementObject>()
+                    .FirstOrDefault()?
+                    .Properties["BytesTotalPerSec"]?
+                    .Value;
+
+                if (networkUsage == null)
+                {
+                    return GetAverage();
+                }
+
+                var bytesPerSecond = Convert.ToDouble(networkUsage);
+                var kbps = (bytesPerSecond * 8) / 1000.0; // Convert bytes/sec to kbps
+                AddSample(Math.Max(0, kbps));
+                return GetAverage();
             }
             catch
             {
-                // Ignore interfaces that do not support IPv4 statistics.
-            }
-        }
-
-        lock (_syncRoot)
-        {
-            if (_previousTimestamp == DateTime.MinValue)
-            {
-                _previousTimestamp = now;
-                _previousTotalBytes = totalBytes;
-                AddSample(0);
                 return GetAverage();
             }
-
-            var seconds = (now - _previousTimestamp).TotalSeconds;
-            if (seconds <= 0)
-            {
-                AddSample(0);
-                return GetAverage();
-            }
-
-            var deltaBytes = totalBytes - _previousTotalBytes;
-            if (deltaBytes < 0)
-            {
-                deltaBytes = 0;
-            }
-
-            _previousTimestamp = now;
-            _previousTotalBytes = totalBytes;
-            var kbps = deltaBytes / seconds / 1024.0;
-            AddSample(Math.Max(0, kbps));
-            return GetAverage();
         }
     }
 
@@ -107,5 +118,4 @@ public class NetworkUsageSampler
         return _windowSum / _window.Count;
     }
 
-    private static bool IsIgnored(NetworkInterfaceType type) => type == NetworkInterfaceType.Loopback || type == NetworkInterfaceType.Tunnel;
 }

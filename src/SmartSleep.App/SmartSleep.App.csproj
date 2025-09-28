@@ -26,4 +26,8 @@
     <Resource Include="resources\smartsleep.png" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="System.Management" Version="9.0.9" />
+  </ItemGroup>
+
 </Project>

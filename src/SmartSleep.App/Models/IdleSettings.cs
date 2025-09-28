@@ -11,7 +11,7 @@ public class IdleSettings
     public double CpuUsagePercentageThreshold { get; set; } = DefaultValues.CpuUsagePercentageThreshold;
     public int CpuSmoothingWindow { get; set; } = DefaultValues.CpuSmoothingWindow;
     public bool UseNetworkActivity { get; set; } = DefaultValues.UseNetworkActivity;
-    public double NetworkKilobytesPerSecondThreshold { get; set; } = DefaultValues.NetworkKilobytesPerSecondThreshold;
+    public double NetworkKilobitsPerSecondThreshold { get; set; } = DefaultValues.NetworkKilobitsPerSecondThreshold;
     public int NetworkSmoothingWindow { get; set; } = DefaultValues.NetworkSmoothingWindow;
 
     // Unified idle time for all conditions
@@ -34,7 +34,7 @@ public class IdleSettings
         CpuUsagePercentageThreshold = CpuUsagePercentageThreshold,
         CpuSmoothingWindow = CpuSmoothingWindow,
         UseNetworkActivity = UseNetworkActivity,
-        NetworkKilobytesPerSecondThreshold = NetworkKilobytesPerSecondThreshold,
+        NetworkKilobitsPerSecondThreshold = NetworkKilobitsPerSecondThreshold,
         NetworkSmoothingWindow = NetworkSmoothingWindow,
         IdleTimeSeconds = IdleTimeSeconds,
     };

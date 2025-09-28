@@ -237,11 +237,11 @@ public class TrayIconService : IDisposable
                Brushes.DimGray));
 
         lines.Add(snapshot.NetworkMonitoringEnabled
-            ? (LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond),
-               StatusDisplayHelper.GetNetworkBrush(snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond, snapshot.ScheduleActive, forTooltip: true))
+            ? (LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobitsPerSecond, snapshot.NetworkThresholdKilobitsPerSecond),
+               StatusDisplayHelper.GetNetworkBrush(snapshot.NetworkKilobitsPerSecond, snapshot.NetworkThresholdKilobitsPerSecond, snapshot.ScheduleActive, forTooltip: true))
             : (snapshot.ScheduleActive
-                ? LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobytesPerSecond)
-                : LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond),
+                ? LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobitsPerSecond)
+                : LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobitsPerSecond, snapshot.NetworkThresholdKilobitsPerSecond),
                Brushes.DimGray));
 
         // Conditions count display removed - no longer needed with real-time activity detection
@@ -273,7 +273,6 @@ public class TrayIconService : IDisposable
             return;
         }
 
-        System.Diagnostics.Debug.WriteLine("Initializing tooltip window");
         _tooltipWindow = new TrayTooltipWindow();
 
         // Show the window initially, then hide it
@@ -293,7 +292,6 @@ public class TrayIconService : IDisposable
         };
         _mouseLeaveCheckTimer.Tick += CheckMouseLeave;
 
-        System.Diagnostics.Debug.WriteLine("Tooltip window initialized and hidden");
     }
 
     private void ShowTooltipWindow()

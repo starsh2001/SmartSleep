@@ -615,7 +615,7 @@ public class SettingsViewModel : ViewModelBase
             CpuUsageThreshold = config.Idle.CpuUsagePercentageThreshold,
             CpuSmoothingWindow = config.Idle.CpuSmoothingWindow,
             UseNetworkActivity = config.Idle.UseNetworkActivity,
-            NetworkThreshold = config.Idle.NetworkKilobytesPerSecondThreshold,
+            NetworkThreshold = config.Idle.NetworkKilobitsPerSecondThreshold,
             NetworkSmoothingWindow = config.Idle.NetworkSmoothingWindow,
             IdleTimeSeconds = config.Idle.IdleTimeSeconds,
             PollingIntervalSeconds = config.PollingIntervalSeconds,
@@ -778,7 +778,7 @@ public class SettingsViewModel : ViewModelBase
         config.Idle.CpuUsagePercentageThreshold = CpuUsageThreshold;
         config.Idle.CpuSmoothingWindow = CpuSmoothingWindow;
         config.Idle.UseNetworkActivity = UseNetworkActivity;
-        config.Idle.NetworkKilobytesPerSecondThreshold = NetworkThreshold;
+        config.Idle.NetworkKilobitsPerSecondThreshold = NetworkThreshold;
         config.Idle.NetworkSmoothingWindow = NetworkSmoothingWindow;
         config.Idle.IdleTimeSeconds = IdleTimeSeconds;
         config.PollingIntervalSeconds = PollingIntervalSeconds;
@@ -932,13 +932,13 @@ public class SettingsViewModel : ViewModelBase
 
         if (snapshot.NetworkMonitoringEnabled)
         {
-            LiveNetworkStatus = LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond);
+            LiveNetworkStatus = LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobitsPerSecond, snapshot.NetworkThresholdKilobitsPerSecond);
         }
         else
         {
             LiveNetworkStatus = snapshot.ScheduleActive
-                ? LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobytesPerSecond)
-                : LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobytesPerSecond, snapshot.NetworkThresholdKilobytesPerSecond);
+                ? LocalizationManager.Format("LiveStatus_NetworkDisabled", snapshot.NetworkKilobitsPerSecond)
+                : LocalizationManager.Format("LiveStatus_Network", snapshot.NetworkKilobitsPerSecond, snapshot.NetworkThresholdKilobitsPerSecond);
         }
 
         // Conditions count display removed - no longer needed with real-time activity detection
